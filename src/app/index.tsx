@@ -1,98 +1,192 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useUserStore } from "../store/userStore";
+import { typography } from "../styles/typography";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function Index() {
+  const workouts = useUserStore((state) => state.workouts);
+  const level = useUserStore((state) => state.xp);
+  const removeWorkout = useUserStore((state) => state.removeWorkout);
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+  const [, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const getLastWorkoutDate = (workout: (typeof workouts)[number]) => {
+    const dates = workout.exercises.flatMap((exercise) =>
+      exercise.history.map((session) => new Date(session.date).getTime())
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+    if (dates.length === 0) {
+      return null;
+    }
+
+    return Math.max(...dates);
+  };
+
+  const getCountdown = (workout: (typeof workouts)[number]) => {
+    const lastWorkoutDate = getLastWorkoutDate(workout);
+
+    if (!lastWorkoutDate) {
+      return "Ready to train";
+    }
+
+    const readyAt = lastWorkoutDate + workout.frequency * 24 * 60 * 60 * 1000;
+
+    const remaining = readyAt - Date.now();
+
+    if (remaining <= 0) {
+      return "Ready to train";
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const getProgress = (workout: (typeof workouts)[number]) => {
+    const lastWorkoutDate = getLastWorkoutDate(workout);
+
+    if (!lastWorkoutDate) {
+      return 1;
+    }
+
+    const totalTime = workout.frequency * 24 * 60 * 60 * 1000;
+    const elapsedTime = Date.now() - lastWorkoutDate;
+
+    return Math.min(Math.max(elapsedTime / totalTime, 0), 1);
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <ScrollView
+      contentContainerStyle={{
+        gap: 16,
+        padding: 16,
+      }}
+    >
+      <Text>level: {level}</Text>
+      {workouts.map((workout) => (
+        <Pressable
+          style={styles.workout_card}
+          key={workout.id}
+          onPress={() =>
+            router.push({
+              pathname: "/details",
+              params: { id: workout.id },
+            })
+          }
+        >
+          <View style={styles.cardHeader}>
+            <View>
+              <Text style={styles.workoutName}>{workout.name}</Text>
+              <Text style={styles.frequency}>
+                Every {workout.frequency} days
+              </Text>
+            </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+            <Pressable
+              onPress={() => removeWorkout(workout.id)}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteIcon}>🗑</Text>
+            </Pressable>
+          </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <Text style={styles.countdown}>{getCountdown(workout)}</Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progress,
+                {
+                  width: `${getProgress(workout) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+        </Pressable>
+      ))}
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <Button title="Add Workout" onPress={() => router.push("/add-workout")} />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  workout_card: {
+    backgroundColor: "#d4d3d3",
+    padding: 28,
+    gap: 8,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+
+  workoutName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    fontFamily: typography.fontFamily,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+
+  frequency: {
+    color: "grey",
+    fontFamily: typography.fontFamily,
   },
-  title: {
-    textAlign: 'center',
+
+  countdown: {
+    fontSize: 20,
+    fontWeight: "bold",
+    fontFamily: typography.fontFamily,
   },
-  code: {
-    textTransform: 'uppercase',
+
+  progressBar: {
+    height: 8,
+    backgroundColor: "#e5e5e5",
+    borderRadius: 4,
+    overflow: "hidden",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  progress: {
+    height: "100%",
+    backgroundColor: "#000",
+    borderRadius: 4,
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+
+  deleteButton: {
+    padding: 4,
+  },
+
+  deleteIcon: {
+    fontSize: 18,
   },
 });

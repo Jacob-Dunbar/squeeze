@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* ─────────────────────────────────────────
+     PANELS
+  ───────────────────────────────────────── */
+
+  Text {
+    font-family: "SpaceGrotesk_400Regular";
+  }
+
+  .pixel-panel {
+    @apply border bg-neutral-950 border-primary;
+    box-shadow: 4px 4px 0px #000;
+  }
+
+  .pixel-panel-inset {
+    @apply border bg-primary/5 border-primary/30;
+    box-shadow:
+      inset 2px 2px 0px rgba(255, 255, 255, 0.08),
+      inset -2px -2px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  .shade-box-cut {
+    @apply self-start px-4 py-2 bg-primary/30;
+
+    clip-path: polygon(
+      10px 0,
+      100% 0,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      0 100%,
+      0 10px
+    );
+  }
+
+  .shade-box {
+    @apply px-4 py-2 bg-primary/30;
+  }
+
+  .pixel-cut {
+    clip-path: polygon(
+      6px 0,
+      calc(100% - 6px) 0,
+      100% 6px,
+      100% calc(100% - 6px),
+      calc(100% - 6px) 100%,
+      6px 100%,
+      0 calc(100% - 6px),
+      0 6px
+    );
+  }
+
+  /* ─────────────────────────────────────────
+     BUTTONS
+  ───────────────────────────────────────── */
+
+  .pixel-button {
+    @apply px-4 py-3 text-black border border-black bg-primary;
+    box-shadow: 4px 4px 0px #000;
+  }
+
+  .pixel-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  .pixel-button-dark {
+    @apply px-4 py-3 border bg-neutral-900 *:text-primary border-primary;
+    box-shadow: 4px 4px 0px #000;
+  }
+
+  .pixel-button-dark:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px #000;
+  }
+
+  /* ─────────────────────────────────────────
+     DIVIDERS
+  ───────────────────────────────────────── */
+
+  .pixel-divider {
+    @apply h-[3px] w-full bg-primary/30;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.8);
+  }
+
+  /* ─────────────────────────────────────────
+     TEXT
+  ───────────────────────────────────────── */
+
+  .pixel-label {
+    @apply text-xs tracking-widest uppercase text-primary/50;
+  }
+
+  /* ─────────────────────────────────────────
+     GLOW
+  ───────────────────────────────────────── */
+
+  .pixel-glow {
+    @apply drop-shadow-[0_0_4px_theme(colors.primary)];
+  }
+
+  .pixel-glow-strong {
+    @apply drop-shadow-[0_0_4px_theme(colors.primary)]
+         drop-shadow-[0_0_10px_theme(colors.primary)];
+  }
+
+  /* ─────────────────────────────────────────
+     BARS
+  ───────────────────────────────────────── */
+
+  .pixel-bar {
+    @apply h-5 p-1 overflow-hidden bg-black border border-primary/80;
+    box-shadow: 2px 2px 0 #000;
+  }
+
+  .pixel-bar-fill {
+    @apply h-full bg-primary/60;
+  }
+}
