@@ -8,23 +8,13 @@ export default function RecoveryCountdown({
   progress,
 }: RecoveryCountdownProps) {
   return (
-    <View className="pixel-bar">
+    <View className="h-[2px] bg-primary/20">
       <View
-        className="pixel-bar-fill opacity-60"
+        className="h-full bg-primary/40"
         style={{
           width: `${progress * 100}%`,
         }}
-      >
-        {/* <LinearGradient
-          colors={["#41a715", "#bdb709"]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        /> */}
-      </View>
+      ></View>
     </View>
   );
 }

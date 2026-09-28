@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+
+import { colors } from "./src/constants/colors.ts";
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
 
@@ -11,15 +14,14 @@ module.exports = {
         "grotesk-medium": ["SpaceGrotesk_500Medium"],
         "grotesk-semibold": ["SpaceGrotesk_600SemiBold"],
         "grotesk-bold": ["SpaceGrotesk_700Bold"],
+        liberation: ["LiberationMono"],
+        "liberation-bold": ["LiberationMonoBold"],
       },
       colors: {
-        // orange
-        // primary: "#fdae13",
-
-        // green
-        primary: "#C3F400",
-        secondary: "#6483FF",
-        tertiary: "#181B25",
+        primary: colors.primary,
+        secondary: colors.secondary,
+        tertiary: colors.tertiary,
+        lightText: colors.lightText,
       },
     },
   },

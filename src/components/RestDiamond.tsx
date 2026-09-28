@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import Svg, { Polygon } from "react-native-svg";
 
 type RestDiamondProps = {
   rest: number;
   restStarted: number;
+  onFinishedChange: (finished: boolean) => void;
 };
 
-export default function RestDiamond({ rest, restStarted }: RestDiamondProps) {
+export default function RestDiamond({
+  rest,
+  restStarted,
+  onFinishedChange,
+}: RestDiamondProps) {
   const [remaining, setRemaining] = useState(rest);
 
   useEffect(() => {
@@ -38,30 +42,16 @@ export default function RestDiamond({ rest, restStarted }: RestDiamondProps) {
 
   const finished = remaining === 0;
 
+  useEffect(() => {
+    onFinishedChange(finished);
+  }, [finished, onFinishedChange]);
+
   return (
-    <View className="items-center gap-2">
-      <Text className="text-[10px] pixel-label">rest</Text>
-
-      <View className="relative h-[76px] w-[76px] items-center justify-center">
-        <Svg width={76} height={76} viewBox="0 0 76 76" className="absolute">
-          <Polygon
-            points="38,2 74,38 38,74 2,38"
-            fill={finished ? "#FFFFFF" : "#181818"}
-            stroke={finished ? "#FFFFFF" : "#444444"}
-            strokeWidth={2}
-          />
-        </Svg>
-
-        <Text
-          className={`text-xl pixel-heading ${
-            finished ? "text-black" : "text-white"
-          }`}
-        >
-          {remaining}
-        </Text>
-      </View>
-
-      <Text className="text-[10px] text-center pixel-label">seconds</Text>
+    <View className="flex flex-col items-center gap-2">
+      <Text className={`text-2xl font-liberation text-white`}>{remaining}</Text>
+      <Text className="text-xs uppercase text-lightText font-liberation">
+        seconds
+      </Text>
     </View>
   );
 }

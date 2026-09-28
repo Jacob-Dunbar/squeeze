@@ -9,6 +9,7 @@ import {
 import { Stack } from "expo-router";
 import { View } from "react-native";
 
+import "../fontawesome";
 import "../../global.css";
 
 export default function RootLayout() {
@@ -17,6 +18,8 @@ export default function RootLayout() {
     SpaceGrotesk_500Medium,
     SpaceGrotesk_600SemiBold,
     SpaceGrotesk_700Bold,
+    LiberationMono: require("../../assets/fonts/LiberationMono-Regular.ttf"),
+    LiberationMonoBold: require("../../assets/fonts/LiberationMono-Bold.ttf"),
   });
 
   if (!fontsLoaded) {

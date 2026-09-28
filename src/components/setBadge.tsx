@@ -3,6 +3,9 @@ import { Animated, Dimensions, Modal, Text, View } from "react-native";
 
 type SetBadgeProps = {
   message: string;
+  shouldAnimate?: boolean;
+  onAnimationStart?: () => void;
+  onAnimationComplete?: () => void;
 };
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -14,7 +17,12 @@ const FINAL_FONT_SIZE = 12;
 
 const FINAL_SCALE = FINAL_FONT_SIZE / ANIMATION_FONT_SIZE;
 
-export default function SetBadge({ message }: SetBadgeProps) {
+export default function SetBadge({
+  message,
+  shouldAnimate = false,
+  onAnimationStart,
+  onAnimationComplete,
+}: SetBadgeProps) {
   const targetRef = useRef<View>(null);
 
   const translateX = useRef(new Animated.Value(0)).current;
@@ -28,9 +36,16 @@ export default function SetBadge({ message }: SetBadgeProps) {
   } | null>(null);
 
   const [animating, setAnimating] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState(!shouldAnimate);
 
   useEffect(() => {
+    if (!shouldAnimate) {
+      setCompleted(true);
+      return;
+    }
+
+    onAnimationStart?.();
+
     requestAnimationFrame(() => {
       targetRef.current?.measureInWindow((x, y, width, height) => {
         const targetCenterX = x + width / 2;
@@ -82,6 +97,7 @@ export default function SetBadge({ message }: SetBadgeProps) {
           if (finished) {
             setAnimating(false);
             setCompleted(true);
+            onAnimationComplete?.();
           }
         });
       });
@@ -94,11 +110,12 @@ export default function SetBadge({ message }: SetBadgeProps) {
       <View
         ref={targetRef}
         collapsable={false}
-        className="ml-auto w-[45px] h-[20px] items-center justify-center"
+        className="ml-auto w-[80px] uppercase h-[20px] items-center justify-center"
       >
         {completed && (
           <Text
-            className="text-white pixel-heading"
+            className="text-white font-liberation"
+            numberOfLines={1}
             style={{
               fontSize: FINAL_FONT_SIZE,
             }}
@@ -147,7 +164,7 @@ export default function SetBadge({ message }: SetBadgeProps) {
                   }}
                 >
                   <Text
-                    className="text-white pixel-heading"
+                    className="text-white uppercase font-liberation"
                     style={{
                       fontSize: ANIMATION_FONT_SIZE,
                     }}

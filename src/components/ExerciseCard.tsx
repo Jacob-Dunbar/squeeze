@@ -1,17 +1,16 @@
-import { Pencil } from "lucide-react-native";
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
-  Image,
   Pressable,
   Text,
   TextInput,
   View,
 } from "react-native";
-import Svg, { Polygon } from "react-native-svg";
+import { colors } from "../constants/colors";
 import type { Exercise } from "../types/workout";
-import PixelateEdges from "./PixelateEdges";
+import ExerciseHistory from "./ExerciseHistory";
 import RestDiamond from "./RestDiamond";
 import SetLogger from "./SetLogger";
 type SessionExercise = {
@@ -25,9 +24,12 @@ type ExerciseCardProps = {
   exerciseIndex: number;
   isOpen: boolean;
   submittedSets: number;
+  badgeAnimation: { setIndex: number; id: number } | null;
   onToggle: () => void;
   onUpdateWeight: (value: string) => void;
   onUpdateReps: (setIndex: number, value: string) => void;
+  onEditSet: (setIndex: number) => void;
+  onBadgeAnimationStart: (id: number) => void;
   onSubmitSet: () => void;
 };
 
@@ -36,9 +38,12 @@ export default function ExerciseCard({
   sessionExercise,
   isOpen,
   submittedSets,
+  badgeAnimation,
   onToggle,
   onUpdateWeight,
   onUpdateReps,
+  onEditSet,
+  onBadgeAnimationStart,
   onSubmitSet,
 }: ExerciseCardProps) {
   const lastSession = exercise.history[exercise.history.length - 1];
@@ -46,22 +51,15 @@ export default function ExerciseCard({
   const targetWeight = lastSession?.weight;
 
   const [restStarted, setRestStarted] = useState(0);
+  const [restFinished, setRestFinished] = useState(false);
 
   const [editingWeight, setEditingWeight] = useState(false);
 
-  const previousSessions = [...exercise.history].reverse().slice(0, 3);
+  const previousSessions = [...exercise.history].reverse();
 
   const [contentHeight, setContentHeight] = useState(0);
 
   const animatedHeight = useRef(new Animated.Value(0)).current;
-
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-
-    return `${String(d.getDate()).padStart(2, "0")}/${String(
-      d.getMonth() + 1,
-    ).padStart(2, "0")}/${String(d.getFullYear()).slice(-2)}`;
-  };
 
   useEffect(() => {
     Animated.timing(animatedHeight, {
@@ -74,26 +72,14 @@ export default function ExerciseCard({
 
   return (
     <View>
-      <Pressable onPress={onToggle}>
-        <View className="relative flex flex-row items-center px-5 py-2 border-0 pixel-panel bg-primary/80">
-          <PixelateEdges />
-          <Text className="text-3xl !font-bold text-black/80 capitalize font-handjet-semibold">
-            {exercise.name}
-          </Text>
-          {/* <Text className="text-xl text-black pixel-heading">
-            {exercise.sets} X {exercise.reps} reps
-          </Text> */}
-          <Text className="!text-black/80 ml-2">{isOpen ? "▲" : "▼"}</Text>
+      <View className="flex flex-row items-center gap-5">
+        <Text className="text-2xl !font-bold text-white/80 capitalize font-grotesk">
+          {exercise.name}
+        </Text>
+        <FontAwesomeIcon icon="pen" color="white" size={12} />
+      </View>
 
-          {submittedSets === exercise.sets && (
-            <Text className="px-3 py-1 ml-auto text-xl font-bold tracking-wide text-black font-handjet-semibold">
-              +20 XP
-            </Text>
-          )}
-        </View>
-      </Pressable>
-
-      <View className="">
+      <View className="mt-5">
         <Animated.View
           style={{
             height: animatedHeight,
@@ -101,169 +87,216 @@ export default function ExerciseCard({
           }}
         >
           <View
-            className="p-5 !mx-1 -mt-1 pixel-panel"
+            className=""
             onLayout={(event) => {
               setContentHeight(event.nativeEvent.layout.height);
             }}
           >
-            <PixelateEdges style="size-2 border-l-1 border-b-1 border-primary" />
+            <View className="flex flex-col gap-4">
+              <ExerciseHistory
+                sessions={previousSessions}
+                targetReps={exercise.reps}
+              />
 
-            {/* History + weight */}
+              {/* todays session ---------------------- */}
+              <View className="flex flex-col flex-1 rounded-xl bg-white/5">
+                <View className="flex flex-row justify-between">
+                  <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
+                    Todays Session
+                  </Text>
+                </View>
 
-            <View className="flex flex-col">
-              {/* <Text className=" pixel-label">Workout History</Text> */}
+                <View className="h-[1px] bg-white/10 mx-4 mb-2"></View>
 
-              {/* history */}
-              <View className="flex-col-reverse">
-                {previousSessions.map((session, index) => (
-                  <View key={session.date} className="flex flex-row gap-5 pl-1">
-                    <View
-                      className={`flex items-center justify-center w-[2px] bg-primary/30 ${index === previousSessions.length - 1 ? "h-3/5 mt-auto" : "h-full"}`}
-                    >
-                      <View
-                        className={`w-2 h-3 bg-black ${index === previousSessions.length - 1 ? "mb-auto" : "my-auto"}`}
-                      >
-                        <View className="w-full h-full bg-primary/40"></View>
-                      </View>
-                    </View>
-                    <View className="flex flex-col flex-1 px-3 py-2 my-2 bg-primary/10">
-                      <View className="flex flex-row gap-4">
-                        {/* Weight */}
-                        <Text className="text-xl text-primary/40 pixel-heading">
-                          {session.weight}kg
-                        </Text>
-                        {/* <Text className="text-xl text-primary/40 pixel-heading">
-                          {formatDate(session.date)}
-                        </Text> */}
-
-                        {/* Reps */}
-                        <View className="flex-row flex-wrap">
-                          {session.reps.map((reps, index) => (
-                            <View key={index} className="">
-                              <Text className="text-lg text-primary/60 pixel-heading">
-                                {reps}
-                                {index < session.reps.length - 1 && " · "}
-                              </Text>
-                            </View>
-                          ))}
+                {/* Parameters Bar ---------------------- */}
+                <View className="flex flex-row gap-3 p-3 mx-4 border rounded-xl bg-tertiary border-white/5">
+                  {/* Load */}
+                  <Pressable
+                    onPress={() => setEditingWeight(true)}
+                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg border-white/10 bg-white/[0.025]"
+                  >
+                    <View className="flex-row items-center w-full gap-2">
+                      <View className="flex-row items-center gap-2 text-primary">
+                        <View className="rotate-45 !text-primary">
+                          <FontAwesomeIcon
+                            icon="dumbbell"
+                            color={colors.primary}
+                            size={16}
+                          />
                         </View>
 
-                        <Image
-                          className="ml-auto opacity-60"
-                          source={require("../../assets/UI/up.png")}
-                        />
+                        <Text className="text-xs uppercase text-lightText font-liberation">
+                          Weight
+                        </Text>
                       </View>
                     </View>
-                  </View>
-                ))}
-              </View>
 
-              <View className="flex flex-row gap-5 pl-1">
-                <View className="flex items-center justify-center w-[2px] mb-auto bg-primary/30 h-3">
-                  {/* <View className="w-3 h-5 mt-auto bg-primary"></View> */}
-                </View>
-              </View>
-              {/* todays session */}
-              <View className="flex flex-col flex-1 w-full pixel-panel-inset ">
-                <Text className="px-4 py-2 text-lg bg-primary/20 pixel-heading">
-                  Todays Session
-                </Text>
-
-                <View className="flex flex-row justify-center flex-1 gap-6 mt-5 mb-3">
-                  {/* TARGET REPS — DIAMOND */}
-                  <View className="items-center gap-2">
-                    <Text className="text-[10px] pixel-label">target</Text>
-
-                    <View className="relative h-[76px] w-[76px] items-center justify-center">
-                      <Svg
-                        width={76}
-                        height={76}
-                        viewBox="0 0 76 76"
-                        className="absolute"
-                      >
-                        <Polygon
-                          points="38,2 74,38 38,74 2,38"
-                          fill="#181818"
-                          stroke="#444444"
-                          strokeWidth={2}
-                        />
-                      </Svg>
-
-                      <Text className="text-2xl pixel-heading">
-                        {exercise.reps || "0"}
+                    {/* Input */}
+                    <View className="flex flex-col items-center gap-2">
+                      <View className="flex flex-row items-center gap-3 ml-5">
+                        {editingWeight ? (
+                          <TextInput
+                            autoFocus
+                            value={sessionExercise.weight}
+                            onChangeText={onUpdateWeight}
+                            keyboardType="numbers-and-punctuation"
+                            placeholder="0"
+                            onBlur={() => setEditingWeight(false)}
+                            selectionColor="green"
+                            className="w-10 text-2xl text-center text-white font-liberation"
+                          />
+                        ) : (
+                          <Text className="text-2xl text-white font-liberation ">
+                            {sessionExercise.weight || "0"}
+                          </Text>
+                        )}
+                        {/* edit icon */}
+                        <View className="">
+                          <FontAwesomeIcon
+                            icon="pen"
+                            color={colors.lightText}
+                            size={14}
+                          />
+                        </View>
+                      </View>
+                      <Text className="text-xs uppercase text-lightText font-liberation">
+                        kg
                       </Text>
                     </View>
+                  </Pressable>
 
-                    <Text className="text-[10px] text-center pixel-label">
-                      reps
-                    </Text>
-                  </View>
-                  {/* WORKING WEIGHT — DIAMOND */}
-                  <View className="items-center gap-2">
-                    <View className="flex-row items-center gap-1">
-                      <Text className="text-[10px] pixel-label">weight</Text>
-                      <Pencil size={10} color="white" />
+                  {/* target */}
+                  <Pressable
+                    onPress={() => setEditingWeight(true)}
+                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg border-white/10 bg-white/[0.025]"
+                  >
+                    <View className="flex-row items-center justify-between w-full gap-2">
+                      <View className="flex-row items-center gap-2 text-primary">
+                        <View className=" text-primary">
+                          <FontAwesomeIcon
+                            icon="location-crosshairs"
+                            color={colors.primary}
+                            size={16}
+                          />
+                        </View>
+
+                        <Text className="text-xs uppercase text-lightText font-liberation">
+                          Target
+                        </Text>
+                      </View>
                     </View>
 
-                    <Pressable
-                      onPress={() => setEditingWeight(true)}
-                      className="relative h-[76px] w-[76px] items-center justify-center"
-                    >
-                      <Svg
-                        width={76}
-                        height={76}
-                        viewBox="0 0 76 76"
-                        className="absolute"
-                      >
-                        <Polygon
-                          points="38,2 74,38 38,74 2,38"
-                          fill="#181818"
-                          stroke="#444444"
-                          strokeWidth={2}
-                        />
-                      </Svg>
+                    {/* Input */}
+                    <View className="flex flex-col items-center gap-2">
+                      <Text className="text-2xl text-white font-liberation ">
+                        {exercise.sets || "0"}x{exercise.reps || "0"}
+                      </Text>
+                      <Text className="text-xs uppercase text-lightText font-liberation">
+                        reps
+                      </Text>
+                    </View>
+                  </Pressable>
 
-                      {editingWeight ? (
-                        <TextInput
-                          autoFocus
-                          value={sessionExercise.weight}
-                          onChangeText={onUpdateWeight}
-                          keyboardType="numbers-and-punctuation"
-                          placeholder="0"
-                          onBlur={() => setEditingWeight(false)}
-                          selectionColor="green"
-                          className="w-16 text-2xl text-center text-white pixel-heading"
-                        />
-                      ) : (
-                        <Text className="text-2xl pixel-heading">
-                          {sessionExercise.weight || "0"}
+                  {/* Rest Timer */}
+                  <Pressable
+                    onPress={() => setEditingWeight(true)}
+                    className={`relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg ${
+                      restFinished
+                        ? "border-primary/40 bg-primary/20"
+                        : "border-white/10 bg-white/[0.025]"
+                    }`}
+                  >
+                    <View className="flex-row items-center justify-between w-full gap-2">
+                      <View className="flex-row items-center gap-2 text-primary">
+                        <View className="text-primary">
+                          <FontAwesomeIcon
+                            icon="hourglass-end"
+                            color={colors.primary}
+                            size={16}
+                          />
+                        </View>
+
+                        <Text className="text-xs uppercase text-lightText font-liberation">
+                          Rest
                         </Text>
-                      )}
-                    </Pressable>
+                      </View>
+                    </View>
 
-                    <Text className="text-[10px] text-center pixel-label">
-                      kg
-                    </Text>
-                  </View>
-                  {/* rest */}
-                  <RestDiamond rest={exercise.rest} restStarted={restStarted} />
+                    {/* Input */}
+                    <View className="flex flex-col items-center gap-2">
+                      <RestDiamond
+                        rest={exercise.rest}
+                        restStarted={restStarted}
+                        onFinishedChange={setRestFinished}
+                      />
+                    </View>
+                  </Pressable>
                 </View>
 
-                <View className="p-4">
-                  {/* Set logger */}
-                  <SetLogger
-                    lastWeekReps={previousSessions[0]?.reps ?? [0, 0, 0]}
-                    sets={exercise.sets}
-                    targetReps={exercise.reps}
-                    reps={sessionExercise.reps}
-                    submittedSets={submittedSets}
-                    onUpdateReps={onUpdateReps}
-                    onSubmitSet={() => {
-                      onSubmitSet();
-                      setRestStarted((previous) => previous + 1);
+                {/* Sets section ---------------------- */}
+                <View className="flex flex-row justify-between">
+                  <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
+                    Sets
+                  </Text>
+
+                  <View
+                    accessible
+                    accessibilityRole="progressbar"
+                    accessibilityLabel={`${submittedSets} of ${exercise.sets} sets completed`}
+                    accessibilityValue={{
+                      min: 0,
+                      max: exercise.sets,
+                      now: submittedSets,
                     }}
-                  />
+                    className="flex-row items-center gap-1.5 pr-4"
+                  >
+                    {Array.from({ length: exercise.sets }).map((_, index) => {
+                      const isCurrent = index === submittedSets;
+
+                      return (
+                        <View
+                          key={index}
+                          className={`size-2 rounded-full ${
+                            index < submittedSets
+                              ? "bg-primary/50"
+                              : isCurrent
+                                ? "bg-primary"
+                                : "bg-white/25"
+                          }`}
+                          style={
+                            isCurrent
+                              ? {
+                                  shadowColor: colors.primary,
+                                  shadowOpacity: 1,
+                                  shadowRadius: 10,
+                                  elevation: 4,
+                                }
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
+                  </View>
                 </View>
+
+                <View className="h-[1px] bg-white/10 mx-4 "></View>
+                {/* Set logger ---------------------- */}
+                <SetLogger
+                  lastWeekReps={previousSessions[0]?.reps ?? [0, 0, 0]}
+                  sets={exercise.sets}
+                  targetReps={exercise.reps}
+                  reps={sessionExercise.reps}
+                  submittedSets={submittedSets}
+                  badgeAnimation={badgeAnimation}
+                  onUpdateReps={onUpdateReps}
+                  onEditSet={onEditSet}
+                  onBadgeAnimationStart={onBadgeAnimationStart}
+                  onSubmitSet={() => {
+                    onSubmitSet();
+                    setRestFinished(false);
+                    setRestStarted((previous) => previous + 1);
+                  }}
+                />
               </View>
             </View>
           </View>
