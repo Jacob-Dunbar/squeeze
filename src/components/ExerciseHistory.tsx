@@ -69,38 +69,43 @@ export default function ExerciseHistory({
   return (
     <View className="flex-grow-0 w-full rounded-xl bg-white/5">
       <View className="flex flex-row justify-between">
-        <View className="flex-row items-center gap-2 p-4 pb-3">
-          <Text className="tracking-wider text-white uppercase font-liberation">
-            History
-          </Text>
-          {progression && (
-            <View
-              accessibilityLabel={
-                progression.type === "weight"
-                  ? `${progression.amount} kilograms added`
-                  : `Total ${progression.unit} change ${progression.label}`
-              }
-              className={`px-2 py-1  rounded-md ${
-                valueIncreased
-                  ? " bg-primary/10"
-                  : valueDecreased
-                    ? " bg-red-500/10"
-                    : " bg-white/5"
-              }`}
-            >
-              <Text
-                className={`text-xs font-liberation ${
+        <View className="gap-1 px-4 pt-4 pb-3">
+          <View className="flex-row items-center gap-2">
+            <Text className="tracking-wider text-white uppercase font-liberation">
+              History
+            </Text>
+            {progression && (
+              <View
+                accessibilityLabel={
+                  progression.type === "weight"
+                    ? `${progression.amount} kilograms added`
+                    : `Total ${progression.unit} change ${progression.label}`
+                }
+                className={`px-2 py-1 rounded-md ${
                   valueIncreased
-                    ? "text-primary"
+                    ? "bg-primary/10"
                     : valueDecreased
-                      ? "text-red-400"
-                      : "text-lightText"
+                      ? "bg-red-500/10"
+                      : "bg-white/5"
                 }`}
               >
-                {progression.label}
-              </Text>
-            </View>
-          )}
+                <Text
+                  className={`text-xs font-liberation ${
+                    valueIncreased
+                      ? "text-primary"
+                      : valueDecreased
+                        ? "text-red-400"
+                        : "text-lightText"
+                  }`}
+                >
+                  {progression.label}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-[10px] text-lightText">
+            Compare your recent sessions
+          </Text>
         </View>
         <Pressable
           accessibilityRole="button"

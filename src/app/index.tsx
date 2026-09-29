@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import ActionButton from "../components/ActionButton";
 import RecoveryCountdown from "../components/RecoveryCountdown";
 import { WORKOUT_ICON_OPTIONS } from "../constants/workoutIcons";
 import { useUserStore } from "../store/userStore";
@@ -12,6 +13,9 @@ export default function Index() {
   const workouts = useUserStore((state) => state.workouts);
   const level = useUserStore((state) => state.xp);
   const removeWorkout = useUserStore((state) => state.removeWorkout);
+  const [openSwipeWorkoutId, setOpenSwipeWorkoutId] = useState<string | null>(
+    null,
+  );
 
   const [, setNow] = useState(Date.now());
 
@@ -137,18 +141,15 @@ export default function Index() {
             </Text>
           </View>
 
-          <Pressable
-            accessibilityRole="button"
+          <ActionButton
+            label="Add workout"
+            icon="plus"
+            color="#C3F400"
             onPress={() => router.push("/add-workout")}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-lg bg-primary active:opacity-80"
-          >
-            <FontAwesomeIcon icon="plus" color="#181B25" size={13} />
-            <Text className="text-xs font-bold tracking-wider uppercase text-tertiary font-grotesk">
-              Add workout
-            </Text>
-          </Pressable>
+          />
         </View>
 
+        {/* Workouts Section --------------------- */}
         {workouts.length === 0 ? (
           <View className="items-center gap-2 px-5 py-12 border rounded-xl border-white/10 bg-white/[0.03]">
             <Text className="text-base text-white font-grotesk">
@@ -180,25 +181,57 @@ export default function Index() {
                 >
                   <ReanimatedSwipeable
                     overshootRight={false}
-                    rightThreshold={32}
                     containerStyle={{ borderRadius: 12, overflow: "hidden" }}
-                    renderRightActions={() => (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Delete ${workout.name}`}
-                        onPress={() => removeWorkout(workout.id)}
-                        style={{ width: 84 }}
-                        className="items-center justify-center gap-1 bg-red-500/90"
+                    childrenContainerStyle={{
+                      flex: 1,
+                      zIndex: openSwipeWorkoutId === workout.id ? 0 : 1,
+                      elevation: openSwipeWorkoutId === workout.id ? 0 : 1,
+                    }}
+                    onSwipeableOpen={() => setOpenSwipeWorkoutId(workout.id)}
+                    onSwipeableWillClose={() => setOpenSwipeWorkoutId(null)}
+                    renderRightActions={(_, __, swipeableMethods) => (
+                      <View
+                        className="flex-row h-full"
+                        style={{
+                          zIndex: openSwipeWorkoutId === workout.id ? 2 : 0,
+                          elevation: openSwipeWorkoutId === workout.id ? 2 : 0,
+                        }}
                       >
-                        <FontAwesomeIcon
-                          icon="trash-can"
-                          color="white"
-                          size={16}
-                        />
-                        <Text className="text-[10px] font-bold tracking-wider text-white uppercase font-liberation">
-                          Delete
-                        </Text>
-                      </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Edit ${workout.name}`}
+                          onPress={() => {
+                            swipeableMethods.close();
+                            router.push({
+                              pathname: "/add-workout",
+                              params: { id: workout.id },
+                            });
+                          }}
+                          style={{ width: 76, height: "100%" }}
+                          className="items-center justify-center gap-2 bg-white/10"
+                        >
+                          <FontAwesomeIcon icon="pen" color="white" size={16} />
+                          <Text className="text-[10px] font-bold tracking-wider text-white uppercase font-liberation">
+                            Edit
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Delete ${workout.name}`}
+                          onPress={() => removeWorkout(workout.id)}
+                          style={{ width: 76, height: "100%" }}
+                          className="items-center justify-center gap-2 bg-red-500/90"
+                        >
+                          <FontAwesomeIcon
+                            icon="trash-can"
+                            color="white"
+                            size={16}
+                          />
+                          <Text className="text-[10px] font-bold tracking-wider text-white uppercase font-liberation">
+                            Delete
+                          </Text>
+                        </Pressable>
+                      </View>
                     )}
                   >
                     <Pressable
@@ -209,11 +242,14 @@ export default function Index() {
                           params: { id: workout.id },
                         })
                       }
-                      className="flex flex-col gap-3 p-4 bg-white/[0.03]"
+                      className={`flex flex-col gap-3 p-4 ${
+                        isReady ? "bg-[#252A34]" : "bg-tertiary"
+                      }`}
                     >
                       <View className="flex flex-row gap-4">
                         <View className="items-center justify-center border rounded-lg size-12 border-primary/25 bg-primary/5">
-                          {workoutIcon ? (
+                          {/* Workout Icon or Initial */}
+                          {workoutIcon?.icon ? (
                             <FontAwesomeIcon
                               icon={workoutIcon.icon}
                               color="#C3F400"
@@ -225,6 +261,8 @@ export default function Index() {
                             </Text>
                           )}
                         </View>
+
+                        {/* Workout Name and Frequency */}
                         <View className="flex flex-col flex-1">
                           <View className="flex-row items-start justify-between gap-3">
                             <View className="flex-1 gap-1">
@@ -252,6 +290,7 @@ export default function Index() {
                         </View>
                       </View>
 
+                      {/* Workout Stats and Progress Tags */}
                       <View className="flex-row flex-wrap gap-2">
                         <View className="px-2 py-1 border rounded-md border-white/10 bg-white/5">
                           <Text className="text-[10px] text-lightText font-liberation">

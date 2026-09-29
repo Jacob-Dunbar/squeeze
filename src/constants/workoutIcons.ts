@@ -34,18 +34,20 @@ import {
   faWeightScale,
 } from "@fortawesome/free-solid-svg-icons";
 
+export const NO_WORKOUT_ICON = "none";
+
 const iconDefinitions: { label: string; icon: IconDefinition }[] = [
-  { label: "Heart", icon: faHeart },
   { label: "Dumbbell", icon: faDumbbell },
   { label: "Runner", icon: faPersonRunning },
+  { label: "Weight", icon: faWeightHanging },
+  { label: "Heart", icon: faHeart },
   { label: "Bolt", icon: faBolt },
   { label: "Fire", icon: faFire },
-  { label: "Weight", icon: faWeightHanging },
-  { label: "Scale", icon: faWeightScale },
+  { label: "Stopwatch", icon: faStopwatch },
   { label: "Swimmer", icon: faPersonSwimming },
+  { label: "Scale", icon: faWeightScale },
   { label: "Cyclist", icon: faPersonBiking },
   { label: "Hiker", icon: faPersonHiking },
-  { label: "Stopwatch", icon: faStopwatch },
   { label: "Trophy", icon: faTrophy },
   { label: "Medal", icon: faMedal },
   { label: "Star", icon: faStar },
@@ -69,8 +71,15 @@ const iconDefinitions: { label: string; icon: IconDefinition }[] = [
   { label: "Cube", icon: faCube },
 ];
 
-export const WORKOUT_ICON_OPTIONS = iconDefinitions.map(({ label, icon }) => ({
-  name: icon.iconName,
-  label,
-  icon,
-}));
+export const WORKOUT_ICON_OPTIONS: {
+  name: string;
+  label: string;
+  icon: IconDefinition | null;
+}[] = [
+  { name: NO_WORKOUT_ICON, label: "No icon", icon: null },
+  ...iconDefinitions.map(({ label, icon }) => ({
+    name: icon.iconName,
+    label,
+    icon,
+  })),
+];

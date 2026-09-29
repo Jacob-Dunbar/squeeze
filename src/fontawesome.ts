@@ -11,11 +11,12 @@ import {
   faSliders,
   faTrashCan,
   faUnlock,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { WORKOUT_ICON_OPTIONS } from "./constants/workoutIcons";
 
 library.add(
-  ...WORKOUT_ICON_OPTIONS.map(({ icon }) => icon),
+  ...WORKOUT_ICON_OPTIONS.flatMap(({ icon }) => (icon ? [icon] : [])),
   faPen,
   faPlus,
   faHandPointer,
@@ -27,4 +28,5 @@ library.add(
   faCircleCheck,
   faUnlock,
   faTrashCan,
+  faXmark,
 );

@@ -7,13 +7,14 @@ interface UserState {
   xp: number;
   workouts: Workout[];
   addWorkout: (workout: NewWorkout) => void;
+  updateWorkout: (workout: Workout) => void;
   removeWorkout: (id: string) => void;
   logSession: (
     workoutId: string,
     sessionData: {
       weight: number;
       reps: number[];
-    }[]
+    }[],
   ) => void;
 }
 
@@ -55,6 +56,13 @@ export const useUserStore = create<UserState>()(
           ],
         })),
 
+      updateWorkout: (updatedWorkout) =>
+        set((state) => ({
+          workouts: state.workouts.map((workout) =>
+            workout.id === updatedWorkout.id ? updatedWorkout : workout,
+          ),
+        })),
+
       removeWorkout: (id: string) =>
         set((state) => ({
           workouts: state.workouts.filter((workout) => workout.id !== id),
@@ -85,6 +93,6 @@ export const useUserStore = create<UserState>()(
     {
       name: "user-storage",
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );

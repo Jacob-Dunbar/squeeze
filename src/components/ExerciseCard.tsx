@@ -47,8 +47,14 @@ export default function ExerciseCard({
   onSubmitSet,
 }: ExerciseCardProps) {
   const lastSession = exercise.history[exercise.history.length - 1];
-
-  const targetWeight = lastSession?.weight;
+  const previousSessionMetTarget = Boolean(
+    lastSession?.reps.length &&
+    lastSession.reps.every((reps) => reps >= exercise.reps),
+  );
+  const previousWeight = Number(lastSession?.weight ?? 0);
+  const enteredWeight = Number(sessionExercise.weight) || 0;
+  const needsWeightIncrease =
+    previousSessionMetTarget && enteredWeight <= previousWeight;
 
   const [restStarted, setRestStarted] = useState(0);
   const [restFinished, setRestFinished] = useState(false);
@@ -73,14 +79,13 @@ export default function ExerciseCard({
   return (
     <View>
       {/* Header Section ---------------------- */}
-      <View className="flex flex-row items-center gap-3">
+      {/* <View className="flex flex-row items-center gap-3">
         <Text className="text-2xl !font-bold text-white/80 capitalize font-grotesk">
           {exercise.name}
         </Text>
-        <FontAwesomeIcon icon="pen" color="white" size={14} />
-      </View>
+      </View> */}
 
-      <View className="mt-5">
+      <View className="">
         <Animated.View style={{ height: animatedHeight, overflow: "hidden" }}>
           <View
             onLayout={(event) => {
@@ -96,9 +101,12 @@ export default function ExerciseCard({
 
               {/* Todays session ---------------------- */}
               <View className="flex flex-col flex-1 rounded-xl bg-white/5">
-                <View className="flex flex-row justify-between">
-                  <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
-                    Todays Session
+                <View className="p-4 pb-3">
+                  <Text className="tracking-wider text-white uppercase font-liberation">
+                    Today&apos;s Session
+                  </Text>
+                  <Text className="mt-1 text-[10px] text-lightText">
+                    Log the work you complete today
                   </Text>
                 </View>
 
@@ -109,7 +117,11 @@ export default function ExerciseCard({
                   {/* Load */}
                   <Pressable
                     onPress={() => setEditingWeight(true)}
-                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl border-white/10 bg-white/5"
+                    className={`relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl ${
+                      needsWeightIncrease
+                        ? "border-primary/60 bg-primary/15"
+                        : "border-white/10 bg-white/5"
+                    }`}
                   >
                     <View className="flex-row items-center w-full gap-2">
                       <View className="flex-row items-center w-full gap-2 text-primary">
@@ -226,10 +238,15 @@ export default function ExerciseCard({
                 </View>
 
                 {/* Sets section ---------------------- */}
-                <View className="flex flex-row justify-between">
-                  <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
-                    Sets
-                  </Text>
+                <View className="flex flex-row items-center justify-between px-4 py-3">
+                  <View className="gap-1">
+                    <Text className="tracking-wider text-white uppercase font-liberation">
+                      Sets
+                    </Text>
+                    <Text className="text-[10px] text-lightText">
+                      Log each set as you complete it
+                    </Text>
+                  </View>
 
                   <View
                     accessible
@@ -279,6 +296,7 @@ export default function ExerciseCard({
                   targetReps={exercise.reps}
                   reps={sessionExercise.reps}
                   submittedSets={submittedSets}
+                  recommendWeightIncrease={needsWeightIncrease}
                   badgeAnimation={badgeAnimation}
                   onUpdateReps={onUpdateReps}
                   onEditSet={onEditSet}

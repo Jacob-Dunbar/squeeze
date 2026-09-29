@@ -1,36 +1,64 @@
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { Stack, router } from "expo-router";
-import { useState } from "react";
-import {
-  Button,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Stack, router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import ActionButton from "../components/ActionButton";
 import { WORKOUT_ICON_OPTIONS } from "../constants/workoutIcons";
 import { useUserStore } from "../store/userStore";
-import { NewExercise } from "../types/workout";
+import type { Exercise, NewWorkout } from "../types/workout";
 
 export default function AddWorkout() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const existingWorkout = useUserStore((state) =>
+    state.workouts.find((workout) => workout.id === id),
+  );
   const addWorkout = useUserStore((state) => state.addWorkout);
+  const updateWorkout = useUserStore((state) => state.updateWorkout);
+  const isEditing = Boolean(id);
 
   const [name, setName] = useState("");
   const [iconName, setIconName] = useState("dumbbell");
+  const [showAllIcons, setShowAllIcons] = useState(false);
   const [frequency, setFrequency] = useState(1);
-  const [exercises, setExercises] = useState<NewExercise[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+
+  const initialIconOptions = WORKOUT_ICON_OPTIONS.slice(0, 8);
+  const selectedIconOption = WORKOUT_ICON_OPTIONS.find(
+    (option) => option.name === iconName,
+  );
+  const visibleIconOptions = showAllIcons
+    ? WORKOUT_ICON_OPTIONS
+    : selectedIconOption &&
+        !initialIconOptions.some((option) => option.name === iconName)
+      ? [...initialIconOptions, selectedIconOption]
+      : initialIconOptions;
+
+  useEffect(() => {
+    if (!existingWorkout) return;
+
+    setName(existingWorkout.name);
+    setIconName(
+      WORKOUT_ICON_OPTIONS.some(
+        (option) => option.name === existingWorkout.icon,
+      )
+        ? existingWorkout.icon
+        : "dumbbell",
+    );
+    setFrequency(existingWorkout.frequency);
+    setExercises(
+      existingWorkout.exercises.map((exercise) => ({ ...exercise })),
+    );
+  }, [existingWorkout]);
 
   const addExercise = () => {
     setExercises((current) => [
       ...current,
       {
+        id: crypto.randomUUID(),
         name: "",
         sets: 3,
         reps: 10,
         rest: 120,
-        weight: 0,
         history: [],
       },
     ]);
@@ -44,7 +72,7 @@ export default function AddWorkout() {
 
   const updateExercise = (
     index: number,
-    field: keyof NewExercise,
+    field: "name" | "sets" | "reps" | "rest",
     value: string,
   ) => {
     setExercises((current) =>
@@ -69,238 +97,311 @@ export default function AddWorkout() {
   const handleCreateWorkout = () => {
     if (!name.trim() || exercises.length === 0) return;
 
-    addWorkout({
-      name: name.trim(),
-      frequency: frequency,
-      icon: iconName,
-      exercises,
-    });
+    if (existingWorkout) {
+      updateWorkout({
+        ...existingWorkout,
+        name: name.trim(),
+        frequency,
+        icon: iconName,
+        exercises,
+      });
+    } else {
+      const newWorkout: NewWorkout = {
+        name: name.trim(),
+        frequency,
+        icon: iconName,
+        exercises: exercises.map(({ id: _id, ...exercise }) => exercise),
+      };
+      addWorkout(newWorkout);
+    }
 
     router.back();
   };
 
+  const canSave =
+    Boolean(name.trim()) &&
+    exercises.length > 0 &&
+    (!isEditing || Boolean(existingWorkout));
+
   return (
-    <>
-      <Stack.Screen options={{ title: "Add Workout" }} />
+    <View className="flex-1 bg-tertiary">
+      <Stack.Screen
+        options={{ title: isEditing ? "Edit Workout" : "New Workout" }}
+      />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        <Button title="Back" onPress={() => router.back()} />
+      <View className="items-center pt-3">
+        <View className="w-10 h-1 rounded-full bg-white/20" />
+      </View>
 
-        <Text style={styles.label}>Workout name</Text>
+      {/* Header Section ----------------------  */}
+      <View className="flex-row items-center justify-between px-5 py-4 border-b border-white/10">
+        <View className="gap-1">
+          <Text className="text-lg tracking-wider text-white uppercase font-grotesk-semibold">
+            {isEditing ? "Edit workout" : "New workout"}
+          </Text>
+          <Text className="text-xs text-lightText">
+            {isEditing
+              ? "Update your plan and keep its training history"
+              : "Build a training plan"}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close workout form"
+          onPress={() => router.back()}
+          className="items-center justify-center border rounded-lg size-10 border-white/10 bg-white/5 active:bg-white/10"
+        >
+          <FontAwesomeIcon icon="xmark" color="#C4C9AC" size={17} />
+        </Pressable>
+      </View>
 
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Chest"
-          style={styles.input}
-        />
+      {/* Loading ----------------------  */}
+      {isEditing && !existingWorkout ? (
+        <View className="items-center justify-center flex-1">
+          <Text className="text-sm text-lightText">Loading workout...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          className="flex-1"
+          keyboardShouldPersistTaps="handled"
+          contentContainerClassName="gap-5 p-5 pb-8"
+        >
+          {/* Form Section ----------------------  */}
+          <View className="gap-2">
+            <View></View>
+            {/* Name ----------------------  */}
+            <Text className="text-xs tracking-widest uppercase text-lightText font-liberation">
+              Workout name
+            </Text>
+            <View className="flex flex-col mb-1">
+              <Text className="text-[10px] text-lightText/70">
+                Give your workout a name, this is a group of exercises you’ll do
+                together.
+              </Text>
+              <Text className="text-[10px] text-lightText/70">
+                Eg. “Arm Workout”, “Leg Day” or “Push Workout (Heavy)”.
+              </Text>
+            </View>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Chest"
+              placeholderTextColor="#737765"
+              className="px-3 py-3 text-white border rounded-lg border-white/10 bg-white/5 font-grotesk"
+            />
+          </View>
 
-        <Text style={styles.label}>Workout icon</Text>
-        <View style={styles.iconGrid}>
-          {WORKOUT_ICON_OPTIONS.map((option) => {
-            const selected = option.name === iconName;
+          {/* Icon ----------------------  */}
+          <View className="gap-2">
+            <Text className="text-xs tracking-widest uppercase text-lightText font-liberation">
+              Workout icon
+            </Text>
+            <Text className="text-[10px] text-lightText/70 mb-1">
+              Pick a symbol to identify this plan
+            </Text>
+            <View className="flex-row flex-wrap justify-between gap-y-2">
+              {visibleIconOptions.map((option) => {
+                const selected = option.name === iconName;
 
-            return (
+                return (
+                  <Pressable
+                    key={option.name}
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ checked: selected }}
+                    onPress={() => setIconName(option.name)}
+                    className={`h-16 w-[23.5%] items-center justify-center gap-1.5 rounded-lg border ${
+                      selected
+                        ? "border-primary/80 bg-primary/10"
+                        : "border-white/10 bg-white/[0.03]"
+                    }`}
+                  >
+                    {option.icon ? (
+                      <FontAwesomeIcon
+                        icon={option.icon}
+                        color={selected ? "#C3F400" : "#C4C9AC"}
+                        size={19}
+                      />
+                    ) : (
+                      <Text
+                        className={`text-[10px] font-liberation ${
+                          selected ? "text-primary" : "text-lightText"
+                        }`}
+                      >
+                        None
+                      </Text>
+                    )}
+                    <Text
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      className={`max-w-[90%] text-[9px] ${
+                        selected ? "text-primary" : "text-lightText"
+                      }`}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {WORKOUT_ICON_OPTIONS.length > 8 && (
               <Pressable
-                key={option.name}
-                accessibilityRole="radio"
-                accessibilityLabel={option.label}
-                accessibilityState={{ checked: selected }}
-                onPress={() => setIconName(option.name)}
-                style={[
-                  styles.iconOption,
-                  selected && styles.iconOptionSelected,
-                ]}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showAllIcons }}
+                onPress={() => setShowAllIcons((current) => !current)}
+                className="self-start px-2 py-1"
               >
-                <FontAwesomeIcon
-                  icon={option.icon}
-                  color={selected ? "#C3F400" : "#C4C9AC"}
-                  size={19}
-                />
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  style={[
-                    styles.iconOptionLabel,
-                    selected && styles.iconOptionLabelSelected,
-                  ]}
-                >
-                  {option.label}
+                <Text className="text-xs text-primary font-liberation">
+                  {showAllIcons
+                    ? "Show fewer icons"
+                    : `Show all ${WORKOUT_ICON_OPTIONS.length} icons`}
                 </Text>
               </Pressable>
-            );
-          })}
-        </View>
+            )}
+          </View>
 
-        <Text style={styles.label}>Frequency</Text>
-
-        <TextInput
-          value={String(frequency)}
-          onChangeText={(value) => setFrequency(Number(value))}
-          placeholder="1"
-          keyboardType="number-pad"
-          inputMode="numeric"
-          style={styles.input}
-        />
-
-        <Text style={styles.sectionTitle}>Exercises</Text>
-
-        {exercises.length === 0 && (
-          <Text style={styles.emptyText}>No exercises added yet.</Text>
-        )}
-
-        {exercises.map((exercise, index) => (
-          <View style={styles.exerciseCard} key={index}>
-            <View style={styles.exerciseHeader}>
-              <Text style={styles.exerciseTitle}>Exercise {index + 1}</Text>
-
-              <Button title="Delete" onPress={() => removeExercise(index)} />
-            </View>
-
-            <Text style={styles.label}>Exercise name</Text>
-
+          {/* Frequency ----------------------  */}
+          <View className="w-full gap-2">
+            <Text className="text-xs tracking-widest uppercase text-lightText font-liberation">
+              Frequency (days)
+            </Text>
+            <Text className="text-[10px] mb-1 text-lightText/70">
+              This is how many days you’ll rest between workouts. For example, 3
+              means you’ll rest for 3 days before doing this workout again.
+            </Text>
             <TextInput
-              value={exercise.name}
-              onChangeText={(value) => updateExercise(index, "name", value)}
-              placeholder="e.g. Bench Press"
-              style={styles.input}
+              value={String(frequency)}
+              onChangeText={(value) => setFrequency(Number(value) || 1)}
+              keyboardType="number-pad"
+              inputMode="numeric"
+              className="w-32 px-3 py-3 text-white border rounded-lg border-white/10 bg-white/5 font-grotesk"
             />
+          </View>
 
-            <View style={styles.row}>
-              <View style={styles.half}>
-                <Text style={styles.label}>Sets</Text>
-                <TextInput
-                  value={String(exercise.sets)}
-                  onChangeText={(value) => updateExercise(index, "sets", value)}
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-              </View>
+          {/* Exercises ----------------------  */}
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 min-w-0 pr-3">
+              <Text className="text-sm tracking-widest text-white uppercase font-liberation">
+                Exercises
+              </Text>
 
-              <View style={styles.half}>
-                <Text style={styles.label}>Reps</Text>
-                <TextInput
-                  value={String(exercise.reps)}
-                  onChangeText={(value) => updateExercise(index, "reps", value)}
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-              </View>
-
-              <View style={styles.half}>
-                <Text style={styles.label}>Rest (seconds)</Text>
-                <TextInput
-                  value={String(exercise.rest)}
-                  onChangeText={(value) => updateExercise(index, "rest", value)}
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-              </View>
+              <Text className="text-[10px] mb-1 text-lightText/70">
+                These are the exercises that make up your workout. You will do
+                them every time you do this workout.
+              </Text>
             </View>
           </View>
-        ))}
 
-        <Button title="+ Add Exercise" onPress={addExercise} />
+          {exercises.length === 0 ? (
+            <View className="items-center px-4 py-8 border rounded-xl border-white/10 bg-white/[0.03]">
+              <Text className="text-sm text-lightText">
+                No exercises added yet.
+              </Text>
+            </View>
+          ) : (
+            exercises.map((exercise, index) => (
+              <View
+                key={exercise.id}
+                className="gap-3 p-4 border rounded-xl border-white/10 bg-white/[0.03]"
+              >
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-sm text-white uppercase font-grotesk-semibold">
+                    Exercise {index + 1}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove exercise ${index + 1}`}
+                    onPress={() => removeExercise(index)}
+                    className="px-2 py-1 rounded-md bg-red-500/10 active:bg-red-500/20"
+                  >
+                    <Text className="text-xs text-red-400 font-liberation">
+                      Remove
+                    </Text>
+                  </Pressable>
+                </View>
 
-        <Button
-          title="Create Workout"
+                <View className="gap-1">
+                  {/* Exercise Name Input */}
+                  <Text className="text-[10px] tracking-widest text-lightText uppercase font-liberation">
+                    Name
+                  </Text>
+                  <Text className="text-[10px] mb-1 text-lightText/70">
+                    The movement you will perform
+                  </Text>
+                  <TextInput
+                    value={exercise.name}
+                    onChangeText={(value) =>
+                      updateExercise(index, "name", value)
+                    }
+                    placeholder="e.g. Bench Press"
+                    placeholderTextColor="#737765"
+                    className="px-3 py-3 text-white border rounded-lg border-white/10 bg-white/5 font-grotesk"
+                  />
+                </View>
+
+                <View className="flex-row gap-4 mt-2">
+                  {/* Exercise Details Inputs */}
+                  {(
+                    [
+                      ["sets", "Sets", exercise.sets],
+                      ["reps", "Reps", exercise.reps],
+                      ["rest", "Rest (sec)", exercise.rest],
+                    ] as const
+                  ).map(([field, label, value]) => (
+                    <View key={field} className="flex-1 gap-1">
+                      <Text className="text-[10px] tracking-widest text-lightText uppercase font-liberation">
+                        {label}
+                      </Text>
+                      <Text className="text-[9px] mb-1 text-lightText/70">
+                        {field === "sets"
+                          ? "Working sets"
+                          : field === "reps"
+                            ? "Per set"
+                            : "Recovery"}
+                      </Text>
+                      <TextInput
+                        value={String(value)}
+                        onChangeText={(input) =>
+                          updateExercise(index, field, input)
+                        }
+                        keyboardType="number-pad"
+                        inputMode="numeric"
+                        className="px-3 py-3 text-center text-white border rounded-lg border-white/10 bg-white/5 font-grotesk"
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
+          <ActionButton
+            label="Add exercise"
+            icon="plus"
+            color="#C3F400"
+            onPress={addExercise}
+          />
+        </ScrollView>
+      )}
+
+      {/* Buttons ----------------------  */}
+      <View className="flex-row gap-3 p-4 border-t border-white/10 bg-tertiary">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.back()}
+          className="items-center justify-center flex-1 px-4 py-3 border rounded-xl border-white/10 bg-white/5 active:bg-white/10"
+        >
+          <Text className="text-xs tracking-widest uppercase text-lightText font-grotesk">
+            Cancel
+          </Text>
+        </Pressable>
+        <ActionButton
+          label={isEditing ? "Save changes" : "Create workout"}
+          color="#C3F400"
           onPress={handleCreateWorkout}
-          disabled={!name.trim() || exercises.length === 0}
+          disabled={!canSave}
+          className="flex-1"
         />
-      </ScrollView>
-    </>
+      </View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: 16,
-    padding: 16,
-  },
-
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 6,
-  },
-
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 8,
-  },
-
-  emptyText: {
-    color: "grey",
-  },
-
-  exerciseCard: {
-    gap: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 12,
-  },
-
-  exerciseHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  exerciseTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-
-  half: {
-    flex: 1,
-  },
-
-  iconGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 8,
-  },
-
-  iconOption: {
-    width: "23.5%",
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "rgba(196,201,172,0.18)",
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.03)",
-  },
-
-  iconOptionSelected: {
-    borderColor: "rgba(195,244,0,0.8)",
-    backgroundColor: "rgba(195,244,0,0.1)",
-  },
-
-  iconOptionLabel: {
-    maxWidth: "90%",
-    color: "#C4C9AC",
-    fontSize: 9,
-  },
-
-  iconOptionLabelSelected: {
-    color: "#C3F400",
-  },
-});

@@ -10,6 +10,7 @@ type SetLoggerProps = {
   reps: string[];
   lastWeekReps: number[];
   submittedSets: number;
+  recommendWeightIncrease: boolean;
   badgeAnimation: { setIndex: number; id: number } | null;
   onUpdateReps: (setIndex: number, value: string) => void;
   onEditSet: (setIndex: number) => void;
@@ -23,6 +24,7 @@ export default function SetLogger({
   reps,
   lastWeekReps,
   submittedSets,
+  recommendWeightIncrease,
   badgeAnimation,
   onUpdateReps,
   onEditSet,
@@ -31,7 +33,6 @@ export default function SetLogger({
 }: SetLoggerProps) {
   const currentSetIndex = submittedSets;
   const currentReps = Number(reps[currentSetIndex] ?? 0);
-  const currentSetAim = lastWeekReps[currentSetIndex] ?? targetReps;
   const [currentSetPanelHeight, setCurrentSetPanelHeight] = useState(0);
   const [preserveFinalPanel, setPreserveFinalPanel] = useState(false);
 
@@ -132,9 +133,11 @@ export default function SetLogger({
             <Text className="flex items-center justify-center text-sm text-black rounded size-7 bg-primary font-liberation">
               {currentSetIndex + 1}
             </Text>
-            <Text className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-right text-[10px] text-lightText font-liberation">
-              Aim for {currentSetAim} or higher
-            </Text>
+            {recommendWeightIncrease && (
+              <Text className="rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-right text-[10px] uppercase text-primary font-liberation">
+                Increase weight
+              </Text>
+            )}
           </View>
 
           <RepsSlider

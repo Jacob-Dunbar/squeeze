@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import ActionButton from "../components/ActionButton";
 import ExerciseSelector from "../components/ExerciseSelector";
 import { useUserStore } from "../store/userStore";
 
@@ -58,6 +59,26 @@ export default function Details() {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!workout) return;
+
+    setSessionData(
+      workout.exercises.map((exercise) => {
+        const lastSession = exercise.history[exercise.history.length - 1];
+
+        return {
+          weight:
+            lastSession?.weight !== undefined ? String(lastSession.weight) : "",
+          reps: Array(exercise.sets).fill(""),
+        };
+      }),
+    );
+    setSubmittedSets(workout.exercises.map(() => 0));
+    setActiveExerciseIndex(0);
+    setOpenExerciseIndex(0);
+    setUnlockedEarly(false);
+  }, [workout]);
 
   if (!workout) {
     return <Text>Workout not found</Text>;
@@ -114,14 +135,14 @@ export default function Details() {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    if (days) return `${days}d ${hours}h ${minutes}m untill unlock`;
-    if (hours) return `${hours}h ${minutes}m ${seconds}s untill unlock`;
+    if (days) return `${days}d ${hours}h ${minutes}m left`;
+    if (hours) return `${hours}h ${minutes}m ${seconds}s left`;
 
     if (totalSeconds <= 0) {
       return "Ready";
     }
 
-    return `${minutes}m ${seconds}s untill unlock`;
+    return `${minutes}m ${seconds}s left`;
   };
 
   const updateWeight = (exerciseIndex: number, value: string) => {
@@ -227,7 +248,6 @@ export default function Details() {
     const dataToLog = sessionData.map((exercise) => ({
       ...exercise,
 
-      // Convert strings to numbers only when saving
       weight: Number(exercise.weight),
       reps: exercise.reps.map(Number),
     }));
@@ -264,25 +284,30 @@ export default function Details() {
             </View>
           </View>
 
-          {workoutReady ? (
+          <View className="flex-row items-center gap-2">
             <Pressable
-              onPress={handleLogSession}
-              disabled={!allSetsCompleted}
-              className={`px-4 py-3 rounded-xl border ${
-                allSetsCompleted
-                  ? "border-secondary bg-secondary active:opacity-80"
-                  : "border-white/10 bg-white/5"
-              }`}
+              accessibilityRole="button"
+              accessibilityLabel="Edit workout"
+              onPress={() =>
+                router.push({
+                  pathname: "/add-workout",
+                  params: { id: workout.id },
+                })
+              }
+              className="items-center justify-center border rounded-lg size-10 border-white/10 bg-white/5 active:opacity-70"
             >
-              <Text
-                className={`text-xs font-bold tracking-widest text-center uppercase font-grotesk ${
-                  allSetsCompleted ? "text-tertiary" : "text-white/30"
-                }`}
-              >
-                Complete
-              </Text>
+              <FontAwesomeIcon icon="pen" color="#C4C9AC" size={15} />
             </Pressable>
-          ) : null}
+
+            {workoutReady ? (
+              <ActionButton
+                label="Complete"
+                color="#6483FF"
+                onPress={handleLogSession}
+                disabled={!allSetsCompleted}
+              />
+            ) : null}
+          </View>
         </View>
 
         {/* Progress Bar ---------------------- */}

@@ -37,6 +37,10 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" />
           <Stack.Screen name="details" />
+          <Stack.Screen
+            name="add-workout"
+            options={{ presentation: "modal" }}
+          />
         </Stack>
       </View>
     </GestureHandlerRootView>
