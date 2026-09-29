@@ -105,9 +105,6 @@ export default function ExerciseCard({
                   <Text className="tracking-wider text-white uppercase font-liberation">
                     Today&apos;s Session
                   </Text>
-                  <Text className="mt-1 text-[10px] text-lightText">
-                    Log the work you complete today
-                  </Text>
                 </View>
 
                 <View className="h-[1px] bg-white/10 mx-4 mb-2"></View>
@@ -239,14 +236,9 @@ export default function ExerciseCard({
 
                 {/* Sets section ---------------------- */}
                 <View className="flex flex-row items-center justify-between px-4 py-3">
-                  <View className="gap-1">
-                    <Text className="tracking-wider text-white uppercase font-liberation">
-                      Sets
-                    </Text>
-                    <Text className="text-[10px] text-lightText">
-                      Log each set as you complete it
-                    </Text>
-                  </View>
+                  <Text className="mt-2 tracking-wider text-white uppercase font-liberation">
+                    Sets
+                  </Text>
 
                   <View
                     accessible

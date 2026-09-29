@@ -1,13 +1,17 @@
 import type { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { Pressable, Text } from "react-native";
+import { colors } from "../constants/colors";
+
+type ActionButtonType = "primary" | "secondary" | "tertiary";
+type ActionButtonState = "active" | "disabled";
 
 type ActionButtonProps = {
   label: string;
   icon?: IconProp;
-  color: string;
+  type: ActionButtonType;
+  state?: ActionButtonState;
   onPress: () => void;
-  disabled?: boolean;
   accessibilityLabel?: string;
   className?: string;
 };
@@ -15,12 +19,19 @@ type ActionButtonProps = {
 export default function ActionButton({
   label,
   icon,
-  color,
+  type,
+  state = "active",
   onPress,
-  disabled = false,
   accessibilityLabel,
   className = "",
 }: ActionButtonProps) {
+  const disabled = state === "disabled";
+  const color = {
+    primary: colors.primary,
+    secondary: colors.lightText,
+    tertiary: colors.secondary,
+  }[type];
+
   return (
     <Pressable
       accessibilityRole="button"

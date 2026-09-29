@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import RepsSlider from "../components/RepSlider";
-
-import SetBadge from "./setBadge";
+import SetBadge from "../components/SetBadge";
 
 type SetLoggerProps = {
   sets: number;
@@ -106,7 +105,7 @@ export default function SetLogger({
                           )}
 
                           {declined && (
-                            <Text className="px-2 ml-auto text-red-500/50">
+                            <Text className="px-2 ml-auto text-tertiary/50">
                               ▼
                             </Text>
                           )}
