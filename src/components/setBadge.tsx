@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, Modal, Text, View } from "react-native";
 
 type SetBadgeProps = {
-  message: string;
+  targetExceeded: boolean;
   shouldAnimate?: boolean;
   onAnimationStart?: () => void;
   onAnimationComplete?: () => void;
@@ -11,18 +11,28 @@ type SetBadgeProps = {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const LARGE_SIZE = 220;
+const ANIMATED_BADGE_WIDTH = 200;
+const ANIMATED_BADGE_HEIGHT = 44;
+const FINAL_BADGE_WIDTH = 90;
+const FINAL_BADGE_HEIGHT = 20;
 
-const ANIMATION_FONT_SIZE = 32;
+const ANIMATION_FONT_SIZE = 26;
 const FINAL_FONT_SIZE = 12;
 
-const FINAL_SCALE = FINAL_FONT_SIZE / ANIMATION_FONT_SIZE;
+const FINAL_SCALE = FINAL_BADGE_WIDTH / ANIMATED_BADGE_WIDTH;
 
 export default function SetBadge({
-  message,
+  targetExceeded,
   shouldAnimate = false,
   onAnimationStart,
   onAnimationComplete,
 }: SetBadgeProps) {
+  const message = targetExceeded ? "Overpowered" : "Target hit";
+  const badgeColors = targetExceeded
+    ? "border-purple-400/70 bg-purple-600/40"
+    : "border-primary/50 bg-primary/20";
+  const badgeTextColor = targetExceeded ? "text-purple-400" : "text-primary";
+
   const targetRef = useRef<View>(null);
 
   const translateX = useRef(new Animated.Value(0)).current;
@@ -110,12 +120,16 @@ export default function SetBadge({
       <View
         ref={targetRef}
         collapsable={false}
-        className="ml-auto w-[80px] uppercase h-[20px] items-center justify-center"
+        className={`ml-auto items-center justify-center rounded-md border px-1 ${
+          completed ? badgeColors : "border-transparent bg-transparent"
+        }`}
+        style={{ width: FINAL_BADGE_WIDTH, height: FINAL_BADGE_HEIGHT }}
       >
         {completed && (
           <Text
-            className="text-white font-liberation"
+            className={`w-full text-center uppercase font-liberation ${badgeTextColor}`}
             numberOfLines={1}
+            adjustsFontSizeToFit
             style={{
               fontSize: FINAL_FONT_SIZE,
             }}
@@ -163,14 +177,26 @@ export default function SetBadge({
                     justifyContent: "center",
                   }}
                 >
-                  <Text
-                    className="text-white uppercase font-liberation"
-                    style={{
-                      fontSize: ANIMATION_FONT_SIZE,
-                    }}
-                  >
-                    {message}
-                  </Text>
+                  <View className="bg-tertiary">
+                    <View
+                      className={`items-center justify-center rounded-lg border-2 px-2 ${badgeColors}`}
+                      style={{
+                        width: ANIMATED_BADGE_WIDTH,
+                        height: ANIMATED_BADGE_HEIGHT,
+                      }}
+                    >
+                      <Text
+                        className={`w-full text-center uppercase font-liberation ${badgeTextColor}`}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        style={{
+                          fontSize: ANIMATION_FONT_SIZE,
+                        }}
+                      >
+                        {message}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </Animated.View>
             </Animated.View>

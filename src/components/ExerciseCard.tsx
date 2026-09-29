@@ -274,7 +274,7 @@ export default function ExerciseCard({
                 <View className="h-[1px] bg-white/10 mx-4 "></View>
                 {/* Set logger ---------------------- */}
                 <SetLogger
-                  lastWeekReps={previousSessions[0]?.reps ?? [0, 0, 0]}
+                  lastWeekReps={previousSessions[0]?.reps ?? []}
                   sets={exercise.sets}
                   targetReps={exercise.reps}
                   reps={sessionExercise.reps}

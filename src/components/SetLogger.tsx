@@ -31,6 +31,7 @@ export default function SetLogger({
 }: SetLoggerProps) {
   const currentSetIndex = submittedSets;
   const currentReps = Number(reps[currentSetIndex] ?? 0);
+  const currentSetAim = lastWeekReps[currentSetIndex] ?? targetReps;
   const [currentSetPanelHeight, setCurrentSetPanelHeight] = useState(0);
   const [preserveFinalPanel, setPreserveFinalPanel] = useState(false);
 
@@ -80,7 +81,7 @@ export default function SetLogger({
                     <View className="w-[90px] h-5 items-end justify-center">
                       {(hitTarget || exceededTarget) && (
                         <SetBadge
-                          message={hitTarget ? "Target hit" : "Limit break"}
+                          targetExceeded={exceededTarget}
                           shouldAnimate={badgeAnimation?.setIndex === setIndex}
                           onAnimationStart={() => {
                             if (badgeAnimation?.setIndex === setIndex) {
@@ -127,9 +128,14 @@ export default function SetLogger({
             setCurrentSetPanelHeight(event.nativeEvent.layout.height)
           }
         >
-          <Text className="flex items-center justify-center mr-auto text-sm text-black rounded size-7 bg-primary font-liberation">
-            {currentSetIndex + 1}
-          </Text>
+          <View className="flex-row items-center justify-between gap-3">
+            <Text className="flex items-center justify-center text-sm text-black rounded size-7 bg-primary font-liberation">
+              {currentSetIndex + 1}
+            </Text>
+            <Text className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-right text-[10px] text-lightText font-liberation">
+              Aim for {currentSetAim} or higher
+            </Text>
+          </View>
 
           <RepsSlider
             reps={Number(reps[currentSetIndex] ?? 0)}
