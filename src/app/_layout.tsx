@@ -8,6 +8,7 @@ import {
 
 import { Stack } from "expo-router";
 import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import "../../global.css";
 import "../fontawesome";
@@ -27,15 +28,17 @@ export default function RootLayout() {
   }
 
   return (
-    <View className="flex-1 bg-black">
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="details" />
-      </Stack>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View className="flex-1 bg-black">
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="details" />
+        </Stack>
+      </View>
+    </GestureHandlerRootView>
   );
 }

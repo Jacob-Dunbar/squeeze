@@ -8,7 +8,7 @@ export default function RecoveryCountdown({
   progress,
 }: RecoveryCountdownProps) {
   return (
-    <View className="h-[2px] bg-primary/20">
+    <View className="h-[3px] bg-primary/20">
       <View
         className="h-full bg-primary/40"
         style={{

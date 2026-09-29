@@ -1,13 +1,16 @@
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { Stack, router } from "expo-router";
 import { useState } from "react";
 import {
   Button,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { WORKOUT_ICON_OPTIONS } from "../constants/workoutIcons";
 import { useUserStore } from "../store/userStore";
 import { NewExercise } from "../types/workout";
 
@@ -15,6 +18,7 @@ export default function AddWorkout() {
   const addWorkout = useUserStore((state) => state.addWorkout);
 
   const [name, setName] = useState("");
+  const [iconName, setIconName] = useState("dumbbell");
   const [frequency, setFrequency] = useState(1);
   const [exercises, setExercises] = useState<NewExercise[]>([]);
 
@@ -34,14 +38,14 @@ export default function AddWorkout() {
 
   const removeExercise = (index: number) => {
     setExercises((current) =>
-      current.filter((_, exerciseIndex) => exerciseIndex !== index)
+      current.filter((_, exerciseIndex) => exerciseIndex !== index),
     );
   };
 
   const updateExercise = (
     index: number,
     field: keyof NewExercise,
-    value: string
+    value: string,
   ) => {
     setExercises((current) =>
       current.map((exercise, exerciseIndex) => {
@@ -58,7 +62,7 @@ export default function AddWorkout() {
           ...exercise,
           [field]: Number(value),
         };
-      })
+      }),
     );
   };
 
@@ -68,7 +72,7 @@ export default function AddWorkout() {
     addWorkout({
       name: name.trim(),
       frequency: frequency,
-      icon: "test",
+      icon: iconName,
       exercises,
     });
 
@@ -90,6 +94,44 @@ export default function AddWorkout() {
           placeholder="e.g. Chest"
           style={styles.input}
         />
+
+        <Text style={styles.label}>Workout icon</Text>
+        <View style={styles.iconGrid}>
+          {WORKOUT_ICON_OPTIONS.map((option) => {
+            const selected = option.name === iconName;
+
+            return (
+              <Pressable
+                key={option.name}
+                accessibilityRole="radio"
+                accessibilityLabel={option.label}
+                accessibilityState={{ checked: selected }}
+                onPress={() => setIconName(option.name)}
+                style={[
+                  styles.iconOption,
+                  selected && styles.iconOptionSelected,
+                ]}
+              >
+                <FontAwesomeIcon
+                  icon={option.icon}
+                  color={selected ? "#C3F400" : "#C4C9AC"}
+                  size={19}
+                />
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  style={[
+                    styles.iconOptionLabel,
+                    selected && styles.iconOptionLabelSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <Text style={styles.label}>Frequency</Text>
 
         <TextInput
@@ -226,5 +268,39 @@ const styles = StyleSheet.create({
 
   half: {
     flex: 1,
+  },
+
+  iconGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 8,
+  },
+
+  iconOption: {
+    width: "23.5%",
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(196,201,172,0.18)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.03)",
+  },
+
+  iconOptionSelected: {
+    borderColor: "rgba(195,244,0,0.8)",
+    backgroundColor: "rgba(195,244,0,0.1)",
+  },
+
+  iconOptionLabel: {
+    maxWidth: "90%",
+    color: "#C4C9AC",
+    fontSize: 9,
+  },
+
+  iconOptionLabelSelected: {
+    color: "#C3F400",
   },
 });

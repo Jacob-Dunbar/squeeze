@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { colors } from "../constants/colors";
 import type { HistoryType } from "../types/workout";
+import { getAverageSetVolume, getHistoryProgress } from "../workoutProgress";
 
 type ExerciseHistoryProps = {
   sessions: HistoryType[];
@@ -28,70 +29,14 @@ const formatTimeAgo = (dateString: string) => {
   return `${Math.floor(ageInMonths / 12)}y ago`;
 };
 
-const getAverageSetVolume = (session: HistoryType) => {
-  if (session.reps.length === 0) return 0;
-
-  const totalVolume = session.reps.reduce(
-    (total, reps) => total + session.weight * reps,
-    0,
-  );
-
-  return totalVolume / session.reps.length;
-};
-
-const getSessionWeight = (session: HistoryType) => {
-  const weight = Number(session.weight);
-  return Number.isFinite(weight) ? weight : 0;
-};
-
-const getSessionVolume = (session: HistoryType) => {
-  const weight = getSessionWeight(session);
-  return session.reps.reduce((total, reps) => total + weight * reps, 0);
-};
-
-const getTotalReps = (session: HistoryType) =>
-  session.reps.reduce((total, reps) => total + reps, 0);
-
 export default function ExerciseHistory({
   sessions,
   targetReps,
 }: ExerciseHistoryProps) {
   const maximumReps = Math.max(1, targetReps + 2);
-  const recentSessions = sessions.slice(0, 4);
-  const latestSession = recentSessions[0];
-  const baselineSession = recentSessions[3];
-  const hasFourSessions = recentSessions.length === 4;
-  const latestWeight = latestSession ? getSessionWeight(latestSession) : 0;
-  const baselineWeight = baselineSession
-    ? getSessionWeight(baselineSession)
-    : 0;
-  const allSessionsUnweighted =
-    hasFourSessions &&
-    recentSessions.every((session) => getSessionWeight(session) === 0);
-  const weightAdded =
-    hasFourSessions && baselineWeight === 0 && latestWeight > 0;
-  const hasRepBasedComparison = allSessionsUnweighted;
-  const baselineValue = baselineSession
-    ? hasRepBasedComparison
-      ? getTotalReps(baselineSession)
-      : getSessionVolume(baselineSession)
-    : 0;
-  const latestValue = latestSession
-    ? hasRepBasedComparison
-      ? getTotalReps(latestSession)
-      : getSessionVolume(latestSession)
-    : 0;
-  const canShowChange = hasFourSessions && (weightAdded || baselineValue > 0);
-  const changePercent =
-    canShowChange && !weightAdded
-      ? Math.round(((latestValue - baselineValue) / baselineValue) * 100)
-      : 0;
-  const addedWeight = Number((latestWeight - baselineWeight).toFixed(2));
-  const changeLabel = weightAdded
-    ? `+ ${addedWeight}kg`
-    : `${changePercent > 0 ? "+" : ""}${changePercent}% vol`;
-  const valueIncreased = weightAdded || changePercent > 0;
-  const valueDecreased = changePercent < 0;
+  const progression = getHistoryProgress(sessions);
+  const valueIncreased = (progression?.amount ?? 0) > 0;
+  const valueDecreased = (progression?.amount ?? 0) < 0;
   const [historyExpanded, setHistoryExpanded] = useState(true);
   const historyHeight = useRef(new Animated.Value(0)).current;
   const measuredHeight = useRef(0);
@@ -128,12 +73,12 @@ export default function ExerciseHistory({
           <Text className="tracking-wider text-white uppercase font-liberation">
             History
           </Text>
-          {canShowChange && (
+          {progression && (
             <View
               accessibilityLabel={
-                weightAdded
-                  ? `${addedWeight} kilograms added`
-                  : `Total volume change ${changeLabel}`
+                progression.type === "weight"
+                  ? `${progression.amount} kilograms added`
+                  : `Total ${progression.unit} change ${progression.label}`
               }
               className={`px-2 py-1  rounded-md ${
                 valueIncreased
@@ -152,7 +97,7 @@ export default function ExerciseHistory({
                       : "text-lightText"
                 }`}
               >
-                {changeLabel}
+                {progression.label}
               </Text>
             </View>
           )}
