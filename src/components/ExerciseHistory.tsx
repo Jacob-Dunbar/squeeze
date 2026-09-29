@@ -1,14 +1,26 @@
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Animated,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { colors } from "../constants/colors";
 import type { HistoryType } from "../types/workout";
-import { getAverageSetVolume, getHistoryProgress } from "../workoutProgress";
+import {
+  getHistoryComparisonChange,
+  getHistoryProgress,
+} from "../workoutProgress";
 import Tag from "./Tag";
 
 type ExerciseHistoryProps = {
   sessions: HistoryType[];
   targetReps: number;
+  onUpdateWeight: (sessionDate: string, weight: number) => void;
 };
 
 const formatTimeAgo = (dateString: string) => {
@@ -33,8 +45,13 @@ const formatTimeAgo = (dateString: string) => {
 export default function ExerciseHistory({
   sessions,
   targetReps,
+  onUpdateWeight,
 }: ExerciseHistoryProps) {
   const maximumReps = Math.max(1, targetReps + 2);
+  const [editingSessionDate, setEditingSessionDate] = useState<string | null>(
+    null,
+  );
+  const [weightDraft, setWeightDraft] = useState("");
   const progression = getHistoryProgress(sessions);
   const valueIncreased = (progression?.amount ?? 0) > 0;
   const valueDecreased = (progression?.amount ?? 0) < 0;
@@ -65,6 +82,17 @@ export default function ExerciseHistory({
       historyHeight.setValue(nextHeight);
       hasMeasuredHeight.current = true;
     }
+  };
+
+  const commitWeight = (sessionDate: string) => {
+    const weight = Number(weightDraft);
+
+    if (weightDraft.trim() && Number.isFinite(weight) && weight >= 0) {
+      onUpdateWeight(sessionDate, weight);
+    }
+
+    setEditingSessionDate(null);
+    Keyboard.dismiss();
   };
 
   return (
@@ -120,9 +148,10 @@ export default function ExerciseHistory({
                 <View className="relative flex flex-col self-start px-3 py-2 rounded-xl bg-background">
                   {sessions[sessionIndex + 1] &&
                     (() => {
-                      const change =
-                        getAverageSetVolume(session) -
-                        getAverageSetVolume(sessions[sessionIndex + 1]);
+                      const change = getHistoryComparisonChange(
+                        session,
+                        sessions[sessionIndex + 1],
+                      );
 
                       if (change === 0) return null;
 
@@ -213,12 +242,34 @@ export default function ExerciseHistory({
                       />
                     </View>
 
-                    <Text className="text-2xl text-white font-grotesk">
-                      {session.weight}{" "}
-                      <span className="text-xs uppercase text-lightText">
-                        kg
-                      </span>
-                    </Text>
+                    {editingSessionDate === session.date ? (
+                      <TextInput
+                        autoFocus
+                        selectTextOnFocus
+                        value={weightDraft}
+                        onChangeText={setWeightDraft}
+                        onSubmitEditing={() => Keyboard.dismiss()}
+                        onBlur={() => commitWeight(session.date)}
+                        keyboardType="decimal-pad"
+                        className="w-10 px-2 py-1 text-lg text-white border rounded-md border-primary/40 bg-white/5 font-grotesk"
+                      />
+                    ) : (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Edit weight, ${session.weight} kilograms`}
+                        onPress={() => {
+                          setWeightDraft(String(session.weight));
+                          setEditingSessionDate(session.date);
+                        }}
+                      >
+                        <Text className="text-2xl text-white font-grotesk">
+                          {session.weight}{" "}
+                          <span className="text-xs uppercase text-lightText">
+                            kg
+                          </span>
+                        </Text>
+                      </Pressable>
+                    )}
                   </View>
                 </View>
               </View>

@@ -8,6 +8,12 @@ interface UserState {
   workouts: Workout[];
   addWorkout: (workout: NewWorkout) => void;
   updateWorkout: (workout: Workout) => void;
+  updateExerciseHistoryWeight: (
+    workoutId: string,
+    exerciseId: string,
+    sessionDate: string,
+    weight: number,
+  ) => void;
   removeWorkout: (id: string) => void;
   logSession: (
     workoutId: string,
@@ -60,6 +66,34 @@ export const useUserStore = create<UserState>()(
         set((state) => ({
           workouts: state.workouts.map((workout) =>
             workout.id === updatedWorkout.id ? updatedWorkout : workout,
+          ),
+        })),
+
+      updateExerciseHistoryWeight: (
+        workoutId,
+        exerciseId,
+        sessionDate,
+        weight,
+      ) =>
+        set((state) => ({
+          workouts: state.workouts.map((workout) =>
+            workout.id !== workoutId
+              ? workout
+              : {
+                  ...workout,
+                  exercises: workout.exercises.map((exercise) =>
+                    exercise.id !== exerciseId
+                      ? exercise
+                      : {
+                          ...exercise,
+                          history: exercise.history.map((session) =>
+                            session.date === sessionDate
+                              ? { ...session, weight }
+                              : session,
+                          ),
+                        },
+                  ),
+                },
           ),
         })),
 

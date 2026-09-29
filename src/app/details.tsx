@@ -16,6 +16,16 @@ export default function Details() {
   );
 
   const logSession = useUserStore((state) => state.logSession);
+  const updateExerciseHistoryWeight = useUserStore(
+    (state) => state.updateExerciseHistoryWeight,
+  );
+
+  const exerciseSetupKey = workout
+    ? `${workout.id}|${workout.exercises
+        .map((exercise) => `${exercise.id}:${exercise.sets}:${exercise.reps}`)
+        .join("|")}`
+    : "";
+  const initializedExerciseSetupKey = useRef<string | null>(null);
 
   const [openExerciseIndex, setOpenExerciseIndex] = useState<number | null>(0);
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
@@ -63,6 +73,9 @@ export default function Details() {
   useEffect(() => {
     if (!workout) return;
 
+    if (initializedExerciseSetupKey.current === exerciseSetupKey) return;
+    initializedExerciseSetupKey.current = exerciseSetupKey;
+
     setSessionData(
       workout.exercises.map((exercise) => {
         const lastSession = exercise.history[exercise.history.length - 1];
@@ -78,7 +91,7 @@ export default function Details() {
     setActiveExerciseIndex(0);
     setOpenExerciseIndex(0);
     setUnlockedEarly(false);
-  }, [workout]);
+  }, [workout, exerciseSetupKey]);
 
   if (!workout) {
     return <Text>Workout not found</Text>;
@@ -275,7 +288,6 @@ export default function Details() {
                 {workout.name}
               </Text>
               <View className="flex flex-row items-center gap-2">
-                <View className="rounded-full size-2 bg-primary/80"></View>
                 <Text className="text-xs tracking-wider uppercase text-primary/80 font-grotesk">
                   Every {workout.frequency} days •{" "}
                   <span className="text-lightText">{getCountdown()}</span>
@@ -346,6 +358,14 @@ export default function Details() {
                   }
                   onUpdateReps={(setIndex, value) =>
                     updateReps(activeExerciseIndex, setIndex, value)
+                  }
+                  onUpdateHistoryWeight={(sessionDate, weight) =>
+                    updateExerciseHistoryWeight(
+                      id,
+                      workout.exercises[activeExerciseIndex].id,
+                      sessionDate,
+                      weight,
+                    )
                   }
                   onEditSet={(setIndex) =>
                     editSet(activeExerciseIndex, setIndex)

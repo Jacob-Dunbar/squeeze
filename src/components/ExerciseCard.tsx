@@ -28,6 +28,7 @@ type ExerciseCardProps = {
   onToggle: () => void;
   onUpdateWeight: (value: string) => void;
   onUpdateReps: (setIndex: number, value: string) => void;
+  onUpdateHistoryWeight: (sessionDate: string, weight: number) => void;
   onEditSet: (setIndex: number) => void;
   onBadgeAnimationStart: (id: number) => void;
   onSubmitSet: () => void;
@@ -42,6 +43,7 @@ export default function ExerciseCard({
   onToggle,
   onUpdateWeight,
   onUpdateReps,
+  onUpdateHistoryWeight,
   onEditSet,
   onBadgeAnimationStart,
   onSubmitSet,
@@ -97,6 +99,7 @@ export default function ExerciseCard({
               <ExerciseHistory
                 sessions={previousSessions}
                 targetReps={exercise.reps}
+                onUpdateWeight={onUpdateHistoryWeight}
               />
 
               {/* Todays session ---------------------- */}
