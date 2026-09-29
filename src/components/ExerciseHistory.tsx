@@ -4,6 +4,7 @@ import { Animated, Pressable, ScrollView, Text, View } from "react-native";
 import { colors } from "../constants/colors";
 import type { HistoryType } from "../types/workout";
 import { getAverageSetVolume, getHistoryProgress } from "../workoutProgress";
+import Tag from "./Tag";
 
 type ExerciseHistoryProps = {
   sessions: HistoryType[];
@@ -75,37 +76,24 @@ export default function ExerciseHistory({
               History
             </Text>
             {progression && (
-              <View
+              <Tag
+                label={progression.label}
+                type={
+                  valueIncreased
+                    ? "primary"
+                    : valueDecreased
+                      ? "tertiary"
+                      : "secondary"
+                }
+                size="small"
                 accessibilityLabel={
                   progression.type === "weight"
                     ? `${progression.amount} kilograms added`
                     : `Total ${progression.unit} change ${progression.label}`
                 }
-                className={`px-2 py-1 rounded-md ${
-                  valueIncreased
-                    ? "bg-primary/10"
-                    : valueDecreased
-                      ? "bg-red-500/10"
-                      : "bg-white/5"
-                }`}
-              >
-                <Text
-                  className={`text-xs font-liberation ${
-                    valueIncreased
-                      ? "text-primary"
-                      : valueDecreased
-                        ? "text-red-400"
-                        : "text-lightText"
-                  }`}
-                >
-                  {progression.label}
-                </Text>
-              </View>
+              />
             )}
           </View>
-          <Text className="text-[10px] text-lightText">
-            Compare your recent sessions
-          </Text>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -129,7 +117,7 @@ export default function ExerciseHistory({
           >
             {sessions.map((session, sessionIndex) => (
               <View key={session.date} className="shrink-0">
-                <View className="relative flex flex-col self-start px-3 py-2 rounded-xl bg-tertiary">
+                <View className="relative flex flex-col self-start px-3 py-2 rounded-xl bg-background">
                   {sessions[sessionIndex + 1] &&
                     (() => {
                       const change =
@@ -149,7 +137,7 @@ export default function ExerciseHistory({
                         >
                           <Text
                             className={`text-xs font-bold ${
-                              change > 0 ? "text-primary" : "text-red-500/70"
+                              change > 0 ? "text-primary" : "text-tertiary/70"
                             }`}
                           >
                             {change > 0 ? "▲" : "▼"}
@@ -205,7 +193,7 @@ export default function ExerciseHistory({
                                 : reps > targetReps
                                   ? "bg-primary"
                                   : isBelowPrevious
-                                    ? "bg-red-500/30"
+                                    ? "bg-tertiary/30"
                                     : "bg-white/10"
                             }`}
                             style={{ height }}

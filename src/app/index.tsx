@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import ActionButton from "../components/ActionButton";
 import RecoveryCountdown from "../components/RecoveryCountdown";
+import Tag from "../components/Tag";
 import { WORKOUT_ICON_OPTIONS } from "../constants/workoutIcons";
 import { useUserStore } from "../store/userStore";
 import { getWorkoutProgressTags } from "../workoutProgress";
@@ -106,7 +107,7 @@ export default function Index() {
   );
 
   return (
-    <View className="flex-1 bg-tertiary">
+    <View className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
         contentContainerClassName="gap-5 px-5 pt-6 pb-8"
@@ -144,7 +145,7 @@ export default function Index() {
           <ActionButton
             label="Add workout"
             icon="plus"
-            color="#C3F400"
+            type="primary"
             onPress={() => router.push("/add-workout")}
           />
         </View>
@@ -220,7 +221,7 @@ export default function Index() {
                           accessibilityLabel={`Delete ${workout.name}`}
                           onPress={() => removeWorkout(workout.id)}
                           style={{ width: 76, height: "100%" }}
-                          className="items-center justify-center gap-2 bg-red-500/90"
+                          className="items-center justify-center gap-2 bg-tertiary/90"
                         >
                           <FontAwesomeIcon
                             icon="trash-can"
@@ -243,7 +244,7 @@ export default function Index() {
                         })
                       }
                       className={`flex flex-col gap-3 p-4 ${
-                        isReady ? "bg-[#252A34]" : "bg-tertiary"
+                        isReady ? "bg-[#252A34]" : "bg-background"
                       }`}
                     >
                       <View className="flex flex-row gap-4">
@@ -273,59 +274,36 @@ export default function Index() {
                                 Every {workout.frequency} days
                               </Text>
                             </View>
-                            <View
-                              className={`px-2 py-1 rounded-md ${
-                                isReady ? "bg-primary/10" : "bg-secondary/10"
-                              }`}
-                            >
-                              <Text
-                                className={`text-[10px] uppercase font-liberation ${
-                                  isReady ? "text-primary" : "text-secondary"
-                                }`}
-                              >
-                                {isReady ? "Ready" : "Recovering"}
-                              </Text>
-                            </View>
+                            <Tag
+                              label={isReady ? "Ready" : "Recovering"}
+                              type={isReady ? "primary" : "secondary"}
+                            />
                           </View>
                         </View>
                       </View>
 
                       {/* Workout Stats and Progress Tags */}
                       <View className="flex-row flex-wrap gap-2">
-                        <View className="px-2 py-1 border rounded-md border-white/10 bg-white/5">
-                          <Text className="text-[10px] text-lightText font-liberation">
-                            {exerciseCount}{" "}
-                            {exerciseCount === 1 ? "exercise" : "exercises"}
-                          </Text>
-                        </View>
-                        <View className="px-2 py-1 border rounded-md border-white/10 bg-white/5">
-                          <Text className="text-[10px] text-lightText font-liberation">
-                            {totalSets} {totalSets === 1 ? "set" : "sets"}
-                          </Text>
-                        </View>
+                        <Tag
+                          label={`${exerciseCount} ${exerciseCount === 1 ? "exercise" : "exercises"}`}
+                          type="neutral"
+                        />
+                        <Tag
+                          label={`${totalSets} ${totalSets === 1 ? "set" : "sets"}`}
+                          type="neutral"
+                        />
                         {progressTags.map((tag) => (
-                          <View
+                          <Tag
                             key={tag.label}
-                            className={`px-2 py-1 border rounded-md ${
+                            label={tag.label}
+                            type={
                               tag.amount > 0
-                                ? "border-primary/20 bg-primary/10"
+                                ? "primary"
                                 : tag.amount < 0
-                                  ? "border-red-500/20 bg-red-500/10"
-                                  : "border-white/10 bg-white/5"
-                            }`}
-                          >
-                            <Text
-                              className={`text-[10px] font-liberation ${
-                                tag.amount > 0
-                                  ? "text-primary"
-                                  : tag.amount < 0
-                                    ? "text-red-400"
-                                    : "text-lightText"
-                              }`}
-                            >
-                              {tag.label}
-                            </Text>
-                          </View>
+                                  ? "tertiary"
+                                  : "secondary"
+                            }
+                          />
                         ))}
                       </View>
 
