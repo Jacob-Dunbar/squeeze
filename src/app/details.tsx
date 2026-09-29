@@ -241,16 +241,26 @@ export default function Details() {
       {/* Header section ---------------------- */}
       <View className="sticky flex flex-col ">
         <View className="flex flex-row items-center justify-between p-5">
-          <View className="flex flex-col gap-1">
-            <Text className="text-xl text-white capitalize font-grotesk">
-              {workout.name}
-            </Text>
-            <View className="flex flex-row items-center gap-2">
-              <View className="rounded-full size-2 bg-primary/80"></View>
-              <Text className="text-xs tracking-wider uppercase text-primary/80 font-grotesk">
-                Every {workout.frequency} days •{" "}
-                <span className="text-lightText">{getCountdown()}</span>
+          <View className="flex-row items-center gap-4">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Back to home"
+              onPress={() => router.replace("/")}
+              className="items-center justify-center border rounded-lg size-10 border-white/10 bg-white/5 active:opacity-70"
+            >
+              <FontAwesomeIcon icon="arrow-left" color="#C4C9AC" size={16} />
+            </Pressable>
+            <View className="flex flex-col gap-1">
+              <Text className="text-xl text-white capitalize font-grotesk">
+                {workout.name}
               </Text>
+              <View className="flex flex-row items-center gap-2">
+                <View className="rounded-full size-2 bg-primary/80"></View>
+                <Text className="text-xs tracking-wider uppercase text-primary/80 font-grotesk">
+                  Every {workout.frequency} days •{" "}
+                  <span className="text-lightText">{getCountdown()}</span>
+                </Text>
+              </View>
             </View>
           </View>
 

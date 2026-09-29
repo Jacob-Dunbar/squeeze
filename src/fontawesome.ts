@@ -1,6 +1,7 @@
 import { library } from "@fortawesome/fontawesome-svg-core";
 import {
   faAnglesRight,
+  faArrowLeft,
   faCircleCheck,
   faDumbbell,
   faHandPointer,
@@ -19,6 +20,7 @@ library.add(
   faHourglassEnd,
   faSliders,
   faAnglesRight,
+  faArrowLeft,
   faCircleCheck,
   faUnlock,
 );
