@@ -1,5 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-worklets";
 import { colors } from "../constants/colors";
 
 import {
@@ -30,11 +32,8 @@ export default function RepsSlider({
   const [inputValue, setInputValue] = useState(String(reps));
   const [showTapToLog, setShowTapToLog] = useState(false);
   const tapOverlayOpacity = useRef(new Animated.Value(0)).current;
-  const containerRef = useRef<View>(null);
   const tapHintTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const hasMoved = useRef(false);
-  const startX = useRef(0);
 
   useEffect(() => {
     setInputValue(String(reps));
@@ -48,16 +47,19 @@ export default function RepsSlider({
     };
   }, []);
 
-  const updateFromPosition = (x: number) => {
-    if (!containerWidth) return;
+  const updateFromPosition = useCallback(
+    (x: number) => {
+      if (!containerWidth) return;
 
-    const percentage = Math.max(0, Math.min(1, x / containerWidth));
-    const value = Math.round(percentage * maxReps);
+      const percentage = Math.max(0, Math.min(1, x / containerWidth));
+      const value = Math.round(percentage * maxReps);
 
-    onUpdateReps(Math.max(1, value));
-  };
+      onUpdateReps(Math.max(1, value));
+    },
+    [containerWidth, maxReps, onUpdateReps],
+  );
 
-  const handleTouchStart = (event: any) => {
+  const beginTrackInteraction = useCallback(() => {
     if (tapHintTimeout.current) {
       clearTimeout(tapHintTimeout.current);
       tapHintTimeout.current = null;
@@ -65,43 +67,58 @@ export default function RepsSlider({
     tapOverlayOpacity.stopAnimation();
     tapOverlayOpacity.setValue(0);
     setShowTapToLog(false);
-    startX.current = event.nativeEvent.locationX;
-    hasMoved.current = false;
-  };
+  }, [tapOverlayOpacity]);
 
-  const handleTouchMove = (event: any) => {
-    const currentX = event.nativeEvent.locationX;
+  const finishTrackSwipe = useCallback(
+    (didMove: boolean) => {
+      if (!didMove) return;
 
-    if (Math.abs(currentX - startX.current) > 5) {
-      hasMoved.current = true;
-    }
-
-    updateFromPosition(currentX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!hasMoved.current) {
-      if (tapHintTimeout.current) {
-        clearTimeout(tapHintTimeout.current);
+      tapHintTimeout.current = setTimeout(() => {
+        setShowTapToLog(true);
+        Animated.timing(tapOverlayOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
         tapHintTimeout.current = null;
-      }
-      tapOverlayOpacity.stopAnimation();
-      tapOverlayOpacity.setValue(0);
-      setShowTapToLog(false);
-      onSubmitSet();
-      return;
-    }
+      }, 2000);
+    },
+    [tapOverlayOpacity],
+  );
 
-    tapHintTimeout.current = setTimeout(() => {
-      setShowTapToLog(true);
-      Animated.timing(tapOverlayOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-      tapHintTimeout.current = null;
-    }, 2000);
-  };
+  const handleTrackTap = useCallback(() => {
+    beginTrackInteraction();
+    onSubmitSet();
+  }, [beginTrackInteraction, onSubmitSet]);
+
+  const sliderGesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .activeOffsetX([-5, 5])
+      .failOffsetY([-32, 32])
+      .onBegin(() => {
+        runOnJS(beginTrackInteraction)();
+      })
+      .onUpdate((event) => {
+        runOnJS(updateFromPosition)(event.x);
+      })
+      .onEnd((event) => {
+        runOnJS(finishTrackSwipe)(Math.abs(event.translationX) > 5);
+      });
+
+    const tap = Gesture.Tap()
+      .maxDuration(300)
+      .maxDistance(12)
+      .onEnd((_event, succeeded) => {
+        if (succeeded) runOnJS(handleTrackTap)();
+      });
+
+    return Gesture.Race(pan, tap);
+  }, [
+    beginTrackInteraction,
+    finishTrackSwipe,
+    handleTrackTap,
+    updateFromPosition,
+  ]);
 
   const submitInput = () => {
     const value = Math.max(1, Math.min(maxReps, Number(inputValue) || 1));
@@ -197,89 +214,85 @@ export default function RepsSlider({
       </View>
 
       {/* Segmented slider */}
-      <View
-        ref={containerRef}
-        className="relative flex-row w-full overflow-hidden rounded-lg bg-white/5"
-        style={{ height: 64 }}
-        onLayout={(event) => {
-          setContainerWidth(event.nativeEvent.layout.width);
-        }}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleTouchStart}
-        onResponderMove={handleTouchMove}
-        onResponderRelease={handleTouchEnd}
-      >
-        {Array.from({ length: maxReps }).map((_, index) => {
-          const active = index < reps;
-          const repNumber = index + 1;
+      <GestureDetector gesture={sliderGesture}>
+        <View
+          className="relative flex-row w-full overflow-hidden rounded-lg bg-white/5"
+          style={{ height: 64 }}
+          onLayout={(event) => {
+            setContainerWidth(event.nativeEvent.layout.width);
+          }}
+        >
+          {Array.from({ length: maxReps }).map((_, index) => {
+            const active = index < reps;
+            const repNumber = index + 1;
 
-          return (
-            <View
-              key={index}
-              className={`flex-1 h-full ${
-                active && index === reps - 1
-                  ? "border-r-[4px] border-primary"
-                  : ""
-              } ${
-                active
-                  ? repNumber < targetReps
-                    ? "bg-primary/40"
-                    : repNumber === targetReps
-                      ? "bg-primary/60"
-                      : "bg-primary"
-                  : ""
-              }`}
-            />
-          );
-        })}
-        {showTapToLog && (
-          <Animated.View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "rgba(0, 0, 0, 0.60)",
-              opacity: tapOverlayOpacity,
-              zIndex: 1,
-            }}
-          >
-            <View className="flex-row items-center gap-3">
-              <FontAwesomeIcon
-                icon="hand-pointer"
-                color={colors.primary}
-                size={18}
+            return (
+              <View
+                key={index}
+                className={`flex-1 h-full ${
+                  active && index === reps - 1
+                    ? "border-r-[4px] border-primary"
+                    : ""
+                } ${
+                  active
+                    ? repNumber < targetReps
+                      ? "bg-primary/40"
+                      : repNumber === targetReps
+                        ? "bg-primary/60"
+                        : "bg-primary"
+                    : ""
+                }`}
               />
-              <Text className="tracking-widest text-center text-white uppercase font-liberation">
-                Tap to log
-              </Text>
-            </View>
-          </Animated.View>
-        )}
-        {reps === 0 && containerWidth > 0 && (
-          <Animated.View
-            pointerEvents="none"
-            style={{
-              position: "absolute",
-              left: 8,
-              top: 20,
-              opacity: hintOpacity,
-              transform: [{ translateX: slideAnim }],
-            }}
-          >
-            <FontAwesomeIcon
-              icon="angles-right"
-              color={colors.primary}
-              size={24}
-            />
-          </Animated.View>
-        )}
-      </View>
+            );
+          })}
+          {showTapToLog && (
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.60)",
+                opacity: tapOverlayOpacity,
+                zIndex: 1,
+              }}
+            >
+              <View className="flex-row items-center gap-3">
+                <FontAwesomeIcon
+                  icon="hand-pointer"
+                  color={colors.primary}
+                  size={18}
+                />
+                <Text className="tracking-widest text-center text-white uppercase font-liberation">
+                  Tap to log
+                </Text>
+              </View>
+            </Animated.View>
+          )}
+          {reps === 0 && containerWidth > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: 8,
+                top: 20,
+                opacity: hintOpacity,
+                transform: [{ translateX: slideAnim }],
+              }}
+            >
+              <FontAwesomeIcon
+                icon="angles-right"
+                color={colors.primary}
+                size={24}
+              />
+            </Animated.View>
+          )}
+        </View>
+      </GestureDetector>
     </View>
   );
 }
