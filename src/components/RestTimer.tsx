@@ -52,7 +52,7 @@ export default function RestTimer({
     <View className="flex flex-row items-center gap-2">
       <Text
         className={`font-liberation ${finished ? "text-lg" : "text-2xl"} ${
-          finished || remaining > 10 ? "text-primary" : "text-red-500"
+          finished || remaining > 10 ? "text-primary" : "text-tertiary"
         }`}
       >
         {finished ? "READY" : formattedRemaining}

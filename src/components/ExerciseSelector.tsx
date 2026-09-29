@@ -33,12 +33,12 @@ export default function ExerciseSelector({
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
             onPress={() => onSelect(index)}
-            className={` rounded-lg shrink-0 justify-center border-2 px-3 py-2 ${
+            className={` rounded-lg shrink-0 justify-center px-3 py-2 ${
               isActive
-                ? "border-primary bg-primary"
+                ? " bg-primary"
                 : isComplete
                   ? " bg-primary/40"
-                  : "border-transparent bg-[#262A34]/70"
+                  : " bg-[#262A34]/70"
             }`}
           >
             <View className="flex-row items-center gap-2">
@@ -50,7 +50,7 @@ export default function ExerciseSelector({
               {isComplete && (
                 <FontAwesomeIcon
                   icon="circle-check"
-                  color={colors.tertiary}
+                  color={colors.background}
                   size={14}
                 />
               )}

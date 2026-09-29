@@ -257,7 +257,7 @@ export default function Details() {
   };
 
   return (
-    <View className="flex-1 bg-tertiary">
+    <View className="flex-1 bg-background">
       {/* Header section ---------------------- */}
       <View className="sticky flex flex-col ">
         <View className="flex flex-row items-center justify-between p-5">
@@ -302,9 +302,9 @@ export default function Details() {
             {workoutReady ? (
               <ActionButton
                 label="Complete"
-                color="#6483FF"
+                type="tertiary"
+                state={allSetsCompleted ? "active" : "disabled"}
                 onPress={handleLogSession}
-                disabled={!allSetsCompleted}
               />
             ) : null}
           </View>
@@ -368,7 +368,7 @@ export default function Details() {
             >
               <View className="flex-row items-center gap-2">
                 <FontAwesomeIcon icon="unlock" color="#181B25" size={16} />
-                <Text className="text-sm font-bold tracking-widest text-center uppercase text-tertiary font-grotesk">
+                <Text className="text-sm font-bold tracking-widest text-center uppercase text-background font-grotesk">
                   Unlock workout early
                 </Text>
               </View>

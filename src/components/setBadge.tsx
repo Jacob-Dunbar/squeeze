@@ -29,9 +29,9 @@ export default function SetBadge({
 }: SetBadgeProps) {
   const message = targetExceeded ? "Overpowered" : "Target hit";
   const badgeColors = targetExceeded
-    ? "border-purple-400/70 bg-purple-600/40"
+    ? "border-secondary/70 bg-secondary/20"
     : "border-primary/50 bg-primary/20";
-  const badgeTextColor = targetExceeded ? "text-purple-400" : "text-primary";
+  const badgeTextColor = targetExceeded ? "text-secondary" : "text-primary";
 
   const targetRef = useRef<View>(null);
 
@@ -177,7 +177,7 @@ export default function SetBadge({
                     justifyContent: "center",
                   }}
                 >
-                  <View className="bg-tertiary">
+                  <View className="bg-background">
                     <View
                       className={`items-center justify-center rounded-lg border-2 px-2 ${badgeColors}`}
                       style={{
