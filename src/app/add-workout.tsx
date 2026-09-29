@@ -124,7 +124,7 @@ export default function AddWorkout() {
     (!isEditing || Boolean(existingWorkout));
 
   return (
-    <View className="flex-1 bg-tertiary">
+    <View className="flex-1 bg-background">
       <Stack.Screen
         options={{ title: isEditing ? "Edit Workout" : "New Workout" }}
       />
@@ -312,9 +312,9 @@ export default function AddWorkout() {
                     accessibilityRole="button"
                     accessibilityLabel={`Remove exercise ${index + 1}`}
                     onPress={() => removeExercise(index)}
-                    className="px-2 py-1 rounded-md bg-red-500/10 active:bg-red-500/20"
+                    className="px-2 py-1 rounded-md bg-tertiary/10 active:bg-tertiary/20"
                   >
-                    <Text className="text-xs text-red-400 font-liberation">
+                    <Text className="text-xs text-tertiary font-liberation">
                       Remove
                     </Text>
                   </Pressable>
@@ -377,14 +377,14 @@ export default function AddWorkout() {
           <ActionButton
             label="Add exercise"
             icon="plus"
-            color="#C3F400"
+            type="primary"
             onPress={addExercise}
           />
         </ScrollView>
       )}
 
       {/* Buttons ----------------------  */}
-      <View className="flex-row gap-3 p-4 border-t border-white/10 bg-tertiary">
+      <View className="flex-row gap-3 p-4 border-t border-white/10 bg-background">
         <Pressable
           accessibilityRole="button"
           onPress={() => router.back()}
@@ -396,9 +396,9 @@ export default function AddWorkout() {
         </Pressable>
         <ActionButton
           label={isEditing ? "Save changes" : "Create workout"}
-          color="#C3F400"
+          type="primary"
+          state={canSave ? "active" : "disabled"}
           onPress={handleCreateWorkout}
-          disabled={!canSave}
           className="flex-1"
         />
       </View>

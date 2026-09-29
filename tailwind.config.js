@@ -21,6 +21,7 @@ module.exports = {
         primary: colors.primary,
         secondary: colors.secondary,
         tertiary: colors.tertiary,
+        background: colors.background,
         lightText: colors.lightText,
       },
     },
