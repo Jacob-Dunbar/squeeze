@@ -3,7 +3,7 @@ import type { Exercise, HistoryType } from "./types/workout";
 export type HistoryProgress = {
   amount: number;
   label: string;
-  type: "percentage" | "weight";
+  type: "percentage" | "weight" | "assistance";
   unit: "reps" | "vol" | "kg";
 };
 
@@ -23,6 +23,29 @@ const getVolume = (session: HistoryType) => {
 export const getAverageSetVolume = (session: HistoryType) =>
   session.reps.length === 0 ? 0 : getVolume(session) / session.reps.length;
 
+export const getHistoryComparisonChange = (
+  current: HistoryType,
+  previous: HistoryType,
+) => {
+  const currentWeight = getWeight(current);
+  const previousWeight = getWeight(previous);
+  const weightChange = currentWeight - previousWeight;
+
+  if (weightChange !== 0 && (currentWeight < 0 || previousWeight < 0)) {
+    return weightChange;
+  }
+
+  if (currentWeight <= 0 && currentWeight === previousWeight) {
+    const currentAverageReps =
+      getTotalReps(current) / (current.reps.length || 1);
+    const previousAverageReps =
+      getTotalReps(previous) / (previous.reps.length || 1);
+    return currentAverageReps - previousAverageReps;
+  }
+
+  return getAverageSetVolume(current) - getAverageSetVolume(previous);
+};
+
 export const getHistoryProgress = (
   sessions: HistoryType[],
 ): HistoryProgress | null => {
@@ -39,6 +62,29 @@ export const getHistoryProgress = (
   const baselineSession = recentSessions[3];
   const latestWeight = getWeight(latestSession);
   const baselineWeight = getWeight(baselineSession);
+  const weightChange = Number((latestWeight - baselineWeight).toFixed(2));
+
+  if (weightChange !== 0 && (baselineWeight < 0 || latestWeight < 0)) {
+    if (weightChange > 0) {
+      const isLoadedWeight = latestWeight > 0;
+      return {
+        amount: weightChange,
+        label: isLoadedWeight
+          ? `+ ${weightChange}kg load increase`
+          : `+ ${weightChange}kg less assistance`,
+        type: isLoadedWeight ? "weight" : "assistance",
+        unit: "kg",
+      };
+    }
+
+    const assistanceAdded = Math.abs(weightChange);
+    return {
+      amount: -assistanceAdded,
+      label: `${assistanceAdded}kg more assistance`,
+      type: "assistance",
+      unit: "kg",
+    };
+  }
 
   if (baselineWeight === 0 && latestWeight > 0) {
     const amount = Number((latestWeight - baselineWeight).toFixed(2));
@@ -50,14 +96,12 @@ export const getHistoryProgress = (
     };
   }
 
-  const allUnweighted = recentSessions.every(
-    (session) => getWeight(session) === 0,
-  );
-  const unit = allUnweighted ? "reps" : "vol";
-  const baselineValue = allUnweighted
+  const sameUnloadedEndpointWeight =
+    baselineWeight <= 0 && baselineWeight === latestWeight;
+  const baselineValue = sameUnloadedEndpointWeight
     ? getTotalReps(baselineSession)
     : getVolume(baselineSession);
-  const latestValue = allUnweighted
+  const latestValue = sameUnloadedEndpointWeight
     ? getTotalReps(latestSession)
     : getVolume(latestSession);
 
@@ -71,7 +115,7 @@ export const getHistoryProgress = (
     amount,
     label: `${amount > 0 ? "+" : ""}${amount}% vol`,
     type: "percentage",
-    unit: allUnweighted ? "reps" : unit,
+    unit: "vol",
   };
 };
 
@@ -110,6 +154,27 @@ export const getWorkoutProgressTags = (exercises: Exercise[]) => {
           ? weightProgress[0].label
           : `+ ${totalAdded}kg added`,
       amount: totalAdded,
+    });
+  }
+
+  const assistanceProgress = progress.filter(
+    (item) => item.type === "assistance",
+  );
+
+  if (assistanceProgress.length > 0) {
+    const totalChange = Number(
+      assistanceProgress
+        .reduce((total, item) => total + item.amount, 0)
+        .toFixed(2),
+    );
+    const absoluteChange = Math.abs(totalChange);
+
+    tags.push({
+      label:
+        totalChange > 0
+          ? `+ ${absoluteChange}kg less assistance`
+          : `${absoluteChange}kg more assistance`,
+      amount: totalChange,
     });
   }
 

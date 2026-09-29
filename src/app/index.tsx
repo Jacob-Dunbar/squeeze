@@ -164,7 +164,9 @@ export default function Index() {
           <View className="gap-3">
             {sortedWorkouts.map((workout) => {
               const countdown = getCountdown(workout);
-              const isReady = getProgress(workout) >= 1;
+              const timeUntilReady = getTimeUntilReady(workout);
+              const isOverdue = timeUntilReady <= -86400000;
+              const isReady = timeUntilReady <= 0;
               const workoutIcon = WORKOUT_ICON_OPTIONS.find(
                 (option) => option.name === workout.icon,
               );
@@ -275,8 +277,20 @@ export default function Index() {
                               </Text>
                             </View>
                             <Tag
-                              label={isReady ? "Ready" : "Recovering"}
-                              type={isReady ? "primary" : "secondary"}
+                              label={
+                                isOverdue
+                                  ? "Overdue"
+                                  : isReady
+                                    ? "Ready"
+                                    : "Recovering"
+                              }
+                              type={
+                                isOverdue
+                                  ? "tertiary"
+                                  : isReady
+                                    ? "primary"
+                                    : "secondary"
+                              }
                             />
                           </View>
                         </View>
