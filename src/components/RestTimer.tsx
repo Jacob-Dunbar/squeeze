@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-type RestDiamondProps = {
+type RestTimerProps = {
   rest: number;
   restStarted: number;
   onFinishedChange: (finished: boolean) => void;
 };
 
-export default function RestDiamond({
+export default function RestTimer({
   rest,
   restStarted,
   onFinishedChange,
-}: RestDiamondProps) {
+}: RestTimerProps) {
   const [remaining, setRemaining] = useState(rest);
 
   useEffect(() => {
@@ -46,11 +46,16 @@ export default function RestDiamond({
     onFinishedChange(finished);
   }, [finished, onFinishedChange]);
 
+  const formattedRemaining = `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
+
   return (
-    <View className="flex flex-col items-center gap-2">
-      <Text className={`text-2xl font-liberation text-white`}>{remaining}</Text>
-      <Text className="text-xs uppercase text-lightText font-liberation">
-        seconds
+    <View className="flex flex-row items-center gap-2">
+      <Text
+        className={`font-liberation ${finished ? "text-lg" : "text-2xl"} ${
+          finished || remaining > 10 ? "text-primary" : "text-red-500"
+        }`}
+      >
+        {finished ? "READY" : formattedRemaining}
       </Text>
     </View>
   );

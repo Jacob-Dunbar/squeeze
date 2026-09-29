@@ -42,14 +42,15 @@ export default function Details() {
     text: string;
     id: number;
   } | null>(null);
+
   const [badgeAnimation, setBadgeAnimation] = useState<{
     exerciseIndex: number;
     setIndex: number;
     id: number;
   } | null>(null);
+
   const badgeAnimationId = useRef(0);
 
-  // Update countdown every second
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(Date.now());
@@ -81,6 +82,10 @@ export default function Details() {
   const workoutReady = unlockedEarly || readyAt === null || now >= readyAt;
 
   const getProgress = () => {
+    if (unlockedEarly) {
+      return 1;
+    }
+
     const lastWorkoutDate = getLastWorkoutDate();
 
     if (!lastWorkoutDate) {
@@ -233,53 +238,50 @@ export default function Details() {
 
   return (
     <View className="flex-1 bg-tertiary">
-      <ScrollView className="flex-1" contentContainerClassName="gap-5 pb-5">
-        <View className="relative flex flex-col">
-          <View className="flex flex-row items-center justify-between p-5">
-            <View className="flex flex-col gap-1">
-              <Text className="text-xl text-white capitalize font-grotesk">
-                {workout.name}
+      {/* Header section ---------------------- */}
+      <View className="sticky flex flex-col ">
+        <View className="flex flex-row items-center justify-between p-5">
+          <View className="flex flex-col gap-1">
+            <Text className="text-xl text-white capitalize font-grotesk">
+              {workout.name}
+            </Text>
+            <View className="flex flex-row items-center gap-2">
+              <View className="rounded-full size-2 bg-primary/80"></View>
+              <Text className="text-xs tracking-wider uppercase text-primary/80 font-grotesk">
+                Every {workout.frequency} days •{" "}
+                <span className="text-lightText">{getCountdown()}</span>
               </Text>
-              <View className="flex flex-row items-center gap-2">
-                <View className="rounded-full size-2 bg-primary/80"></View>
-                <Text className="text-xs tracking-wider uppercase text-primary/80 font-grotesk">
-                  Every {workout.frequency} days •{" "}
-                  <span className="text-lightText">{getCountdown()}</span>
-                </Text>
-              </View>
             </View>
-
-            {/* <Text className=" pixel-label">{workout.frequency} days rest</Text> */}
-            {workoutReady ? (
-              <Pressable
-                onPress={handleLogSession}
-                disabled={!allSetsCompleted}
-                className={`px-4 py-3 rounded-xl border ${
-                  allSetsCompleted
-                    ? "border-secondary bg-secondary active:opacity-80"
-                    : "border-white/10 bg-white/5"
-                }`}
-              >
-                <Text
-                  className={`text-xs font-bold tracking-widest text-center uppercase font-grotesk ${
-                    allSetsCompleted ? "text-tertiary" : "text-white/30"
-                  }`}
-                >
-                  Complete
-                </Text>
-              </Pressable>
-            ) : null}
           </View>
 
-          <RecoveryCountdown progress={getProgress()} />
-
-          {/* <View className="flex flex-row items-end justify-end">
-            <Text className="text-xl pixel-heading font-handjet-semibold">
-              {getCountdown()}
-            </Text>
-          </View> */}
+          {workoutReady ? (
+            <Pressable
+              onPress={handleLogSession}
+              disabled={!allSetsCompleted}
+              className={`px-4 py-3 rounded-xl border ${
+                allSetsCompleted
+                  ? "border-secondary bg-secondary active:opacity-80"
+                  : "border-white/10 bg-white/5"
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold tracking-widest text-center uppercase font-grotesk ${
+                  allSetsCompleted ? "text-tertiary" : "text-white/30"
+                }`}
+              >
+                Complete
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
+        {/* Progress Bar ---------------------- */}
+        <RecoveryCountdown progress={getProgress()} />
+      </View>
+      <ScrollView
+        className="flex-1 pt-5"
+        contentContainerClassName="gap-5 pb-5"
+      >
         {workoutReady ? (
           <>
             <ExerciseSelector
@@ -288,6 +290,7 @@ export default function Details() {
               submittedSets={submittedSets}
               onSelect={selectExercise}
             />
+
             <View className="flex flex-col gap-5 px-5">
               {workout.exercises[activeExerciseIndex] && (
                 <ExerciseCard

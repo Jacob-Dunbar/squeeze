@@ -11,7 +11,7 @@ import {
 import { colors } from "../constants/colors";
 import type { Exercise } from "../types/workout";
 import ExerciseHistory from "./ExerciseHistory";
-import RestDiamond from "./RestDiamond";
+import RestTimer from "./RestTimer";
 import SetLogger from "./SetLogger";
 type SessionExercise = {
   weight: string;
@@ -72,33 +72,29 @@ export default function ExerciseCard({
 
   return (
     <View>
-      <View className="flex flex-row items-center gap-5">
+      {/* Header Section ---------------------- */}
+      <View className="flex flex-row items-center gap-3">
         <Text className="text-2xl !font-bold text-white/80 capitalize font-grotesk">
           {exercise.name}
         </Text>
-        <FontAwesomeIcon icon="pen" color="white" size={12} />
+        <FontAwesomeIcon icon="pen" color="white" size={14} />
       </View>
 
       <View className="mt-5">
-        <Animated.View
-          style={{
-            height: animatedHeight,
-            overflow: "hidden",
-          }}
-        >
+        <Animated.View style={{ height: animatedHeight, overflow: "hidden" }}>
           <View
-            className=""
             onLayout={(event) => {
               setContentHeight(event.nativeEvent.layout.height);
             }}
           >
             <View className="flex flex-col gap-4">
+              {/* History section ---------------------- */}
               <ExerciseHistory
                 sessions={previousSessions}
                 targetReps={exercise.reps}
               />
 
-              {/* todays session ---------------------- */}
+              {/* Todays session ---------------------- */}
               <View className="flex flex-col flex-1 rounded-xl bg-white/5">
                 <View className="flex flex-row justify-between">
                   <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
@@ -109,31 +105,40 @@ export default function ExerciseCard({
                 <View className="h-[1px] bg-white/10 mx-4 mb-2"></View>
 
                 {/* Parameters Bar ---------------------- */}
-                <View className="flex flex-row gap-3 p-3 mx-4 border rounded-xl bg-tertiary border-white/5">
+                <View className="flex flex-row gap-[8px] p-[8px] mx-4 border rounded-2xl bg-black/40 border-white/5">
                   {/* Load */}
                   <Pressable
                     onPress={() => setEditingWeight(true)}
-                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg border-white/10 bg-white/[0.025]"
+                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl border-white/10 bg-white/5"
                   >
                     <View className="flex-row items-center w-full gap-2">
-                      <View className="flex-row items-center gap-2 text-primary">
+                      <View className="flex-row items-center w-full gap-2 text-primary">
                         <View className="rotate-45 !text-primary">
                           <FontAwesomeIcon
                             icon="dumbbell"
                             color={colors.primary}
-                            size={16}
+                            size={15}
                           />
                         </View>
 
-                        <Text className="text-xs uppercase text-lightText font-liberation">
+                        <Text className="text-[11px] uppercase text-lightText font-liberation">
                           Weight
                         </Text>
+
+                        {/* edit icon */}
+                        <View className="ml-auto">
+                          <FontAwesomeIcon
+                            icon="pen"
+                            color={colors.lightText}
+                            size={14}
+                          />
+                        </View>
                       </View>
                     </View>
 
                     {/* Input */}
                     <View className="flex flex-col items-center gap-2">
-                      <View className="flex flex-row items-center gap-3 ml-5">
+                      <View className="flex flex-row items-center gap-2 ml-5">
                         {editingWeight ? (
                           <TextInput
                             autoFocus
@@ -150,37 +155,26 @@ export default function ExerciseCard({
                             {sessionExercise.weight || "0"}
                           </Text>
                         )}
-                        {/* edit icon */}
-                        <View className="">
-                          <FontAwesomeIcon
-                            icon="pen"
-                            color={colors.lightText}
-                            size={14}
-                          />
-                        </View>
+                        <Text className="text-xs uppercase text-lightText font-liberation">
+                          kg
+                        </Text>
                       </View>
-                      <Text className="text-xs uppercase text-lightText font-liberation">
-                        kg
-                      </Text>
                     </View>
                   </Pressable>
 
                   {/* target */}
-                  <Pressable
-                    onPress={() => setEditingWeight(true)}
-                    className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg border-white/10 bg-white/[0.025]"
-                  >
+                  <View className="relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl border-white/10 bg-white/5">
                     <View className="flex-row items-center justify-between w-full gap-2">
                       <View className="flex-row items-center gap-2 text-primary">
                         <View className=" text-primary">
                           <FontAwesomeIcon
                             icon="location-crosshairs"
                             color={colors.primary}
-                            size={16}
+                            size={15}
                           />
                         </View>
 
-                        <Text className="text-xs uppercase text-lightText font-liberation">
+                        <Text className="text-[11px] uppercase text-lightText font-liberation">
                           Target
                         </Text>
                       </View>
@@ -191,19 +185,19 @@ export default function ExerciseCard({
                       <Text className="text-2xl text-white font-liberation ">
                         {exercise.sets || "0"}x{exercise.reps || "0"}
                       </Text>
-                      <Text className="text-xs uppercase text-lightText font-liberation">
+                      {/* <Text className="text-xs uppercase text-lightText font-liberation">
                         reps
-                      </Text>
+                      </Text> */}
                     </View>
-                  </Pressable>
+                  </View>
 
                   {/* Rest Timer */}
                   <Pressable
                     onPress={() => setEditingWeight(true)}
-                    className={`relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-lg ${
+                    className={`relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl ${
                       restFinished
                         ? "border-primary/40 bg-primary/20"
-                        : "border-white/10 bg-white/[0.025]"
+                        : "border-white/10 bg-white/5"
                     }`}
                   >
                     <View className="flex-row items-center justify-between w-full gap-2">
@@ -212,24 +206,22 @@ export default function ExerciseCard({
                           <FontAwesomeIcon
                             icon="hourglass-end"
                             color={colors.primary}
-                            size={16}
+                            size={15}
                           />
                         </View>
 
-                        <Text className="text-xs uppercase text-lightText font-liberation">
+                        <Text className="text-[11px] uppercase text-lightText font-liberation">
                           Rest
                         </Text>
                       </View>
                     </View>
 
                     {/* Input */}
-                    <View className="flex flex-col items-center gap-2">
-                      <RestDiamond
-                        rest={exercise.rest}
-                        restStarted={restStarted}
-                        onFinishedChange={setRestFinished}
-                      />
-                    </View>
+                    <RestTimer
+                      rest={exercise.rest}
+                      restStarted={restStarted}
+                      onFinishedChange={setRestFinished}
+                    />
                   </Pressable>
                 </View>
 

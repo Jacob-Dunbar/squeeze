@@ -9,8 +9,8 @@ import {
 import { Stack } from "expo-router";
 import { View } from "react-native";
 
-import "../fontawesome";
 import "../../global.css";
+import "../fontawesome";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -31,9 +31,6 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: {
-            // backgroundColor: "black",
-          },
         }}
       >
         <Stack.Screen name="index" />
