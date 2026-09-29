@@ -39,11 +39,59 @@ const getAverageSetVolume = (session: HistoryType) => {
   return totalVolume / session.reps.length;
 };
 
+const getSessionWeight = (session: HistoryType) => {
+  const weight = Number(session.weight);
+  return Number.isFinite(weight) ? weight : 0;
+};
+
+const getSessionVolume = (session: HistoryType) => {
+  const weight = getSessionWeight(session);
+  return session.reps.reduce((total, reps) => total + weight * reps, 0);
+};
+
+const getTotalReps = (session: HistoryType) =>
+  session.reps.reduce((total, reps) => total + reps, 0);
+
 export default function ExerciseHistory({
   sessions,
   targetReps,
 }: ExerciseHistoryProps) {
   const maximumReps = Math.max(1, targetReps + 2);
+  const recentSessions = sessions.slice(0, 4);
+  const latestSession = recentSessions[0];
+  const baselineSession = recentSessions[3];
+  const hasFourSessions = recentSessions.length === 4;
+  const latestWeight = latestSession ? getSessionWeight(latestSession) : 0;
+  const baselineWeight = baselineSession
+    ? getSessionWeight(baselineSession)
+    : 0;
+  const allSessionsUnweighted =
+    hasFourSessions &&
+    recentSessions.every((session) => getSessionWeight(session) === 0);
+  const weightAdded =
+    hasFourSessions && baselineWeight === 0 && latestWeight > 0;
+  const hasRepBasedComparison = allSessionsUnweighted;
+  const baselineValue = baselineSession
+    ? hasRepBasedComparison
+      ? getTotalReps(baselineSession)
+      : getSessionVolume(baselineSession)
+    : 0;
+  const latestValue = latestSession
+    ? hasRepBasedComparison
+      ? getTotalReps(latestSession)
+      : getSessionVolume(latestSession)
+    : 0;
+  const canShowChange = hasFourSessions && (weightAdded || baselineValue > 0);
+  const changePercent =
+    canShowChange && !weightAdded
+      ? Math.round(((latestValue - baselineValue) / baselineValue) * 100)
+      : 0;
+  const addedWeight = Number((latestWeight - baselineWeight).toFixed(2));
+  const changeLabel = weightAdded
+    ? `+ ${addedWeight}kg`
+    : `${changePercent > 0 ? "+" : ""}${changePercent}% vol`;
+  const valueIncreased = weightAdded || changePercent > 0;
+  const valueDecreased = changePercent < 0;
   const [historyExpanded, setHistoryExpanded] = useState(true);
   const historyHeight = useRef(new Animated.Value(0)).current;
   const measuredHeight = useRef(0);
@@ -76,16 +124,46 @@ export default function ExerciseHistory({
   return (
     <View className="flex-grow-0 w-full rounded-xl bg-white/5">
       <View className="flex flex-row justify-between">
-        <Text className="p-4 pb-3 tracking-wider text-white uppercase font-liberation">
-          History
-        </Text>
+        <View className="flex-row items-center gap-2 p-4 pb-3">
+          <Text className="tracking-wider text-white uppercase font-liberation">
+            History
+          </Text>
+          {canShowChange && (
+            <View
+              accessibilityLabel={
+                weightAdded
+                  ? `${addedWeight} kilograms added`
+                  : `Total volume change ${changeLabel}`
+              }
+              className={`px-2 py-1  rounded-md ${
+                valueIncreased
+                  ? " bg-primary/10"
+                  : valueDecreased
+                    ? " bg-red-500/10"
+                    : " bg-white/5"
+              }`}
+            >
+              <Text
+                className={`text-xs font-liberation ${
+                  valueIncreased
+                    ? "text-primary"
+                    : valueDecreased
+                      ? "text-red-400"
+                      : "text-lightText"
+                }`}
+              >
+                {changeLabel}
+              </Text>
+            </View>
+          )}
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: historyExpanded }}
           onPress={toggleHistory}
           className="p-4 pb-3 tracking-wider uppercase text-primary font-liberation"
         >
-          <Text className="text-primary font-liberation">
+          <Text className="text-xs text-primary/80 font-liberation">
             {historyExpanded ? "Hide" : "Show"}
           </Text>
         </Pressable>

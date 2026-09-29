@@ -162,7 +162,7 @@ export default function RepsSlider({
   return (
     <View className="flex-col flex-1 h-10 gap-3">
       <View className="flex flex-row justify-center">
-        <View className="flex flex-row items-end justify-end gap-2">
+        <View className="flex flex-row items-end justify-end gap-1">
           {/* Numerical value */}
           {editing ? (
             <TextInput
@@ -183,7 +183,7 @@ export default function RepsSlider({
             </TouchableOpacity>
           )}
 
-          <Text className="mb-1 text-2xl tracking-wider uppercase font-liberation text-primary ">
+          <Text className="mb-[1px] text-xl tracking-wider uppercase font-liberation text-primary ">
             Reps
           </Text>
         </View>
@@ -193,7 +193,6 @@ export default function RepsSlider({
         <FontAwesomeIcon icon="sliders" color={colors.primary} size={14} />
         <Text className="mb-1 text-xs tracking-wide uppercase font-liberation text-lightText ">
           SLIDE TO ADJUST • TAP TRACK TO LOG
-          {}
         </Text>
       </View>
 

@@ -122,7 +122,7 @@ export default function SetLogger({
       {/* Current set */}
       {currentSetIndex < sets && (
         <View
-          className="flex flex-col gap-2 p-4 mb-2 border rounded-xl bg-black/10 border-primary"
+          className="flex flex-col gap-2 p-4 mb-2 border-2 rounded-2xl bg-black/30 border-primary"
           onLayout={(event) =>
             setCurrentSetPanelHeight(event.nativeEvent.layout.height)
           }
