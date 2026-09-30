@@ -19,8 +19,10 @@ export default function AddWorkout() {
   const [name, setName] = useState("");
   const [iconName, setIconName] = useState("dumbbell");
   const [showAllIcons, setShowAllIcons] = useState(false);
-  const [frequency, setFrequency] = useState(1);
+  const [frequencyInput, setFrequencyInput] = useState("1");
   const [exercises, setExercises] = useState<Exercise[]>([]);
+
+  const frequency = Number(frequencyInput) || 1;
 
   const initialIconOptions = WORKOUT_ICON_OPTIONS.slice(0, 8);
   const selectedIconOption = WORKOUT_ICON_OPTIONS.find(
@@ -44,7 +46,7 @@ export default function AddWorkout() {
         ? existingWorkout.icon
         : "dumbbell",
     );
-    setFrequency(existingWorkout.frequency);
+    setFrequencyInput(String(existingWorkout.frequency));
     setExercises(
       existingWorkout.exercises.map((exercise) => ({ ...exercise })),
     );
@@ -95,7 +97,7 @@ export default function AddWorkout() {
   };
 
   const handleCreateWorkout = () => {
-    if (!name.trim() || exercises.length === 0) return;
+    if (!canSave) return;
 
     if (existingWorkout) {
       updateWorkout({
@@ -121,6 +123,7 @@ export default function AddWorkout() {
   const canSave =
     Boolean(name.trim()) &&
     exercises.length > 0 &&
+    exercises.every((exercise) => Boolean(exercise.name.trim())) &&
     (!isEditing || Boolean(existingWorkout));
 
   return (
@@ -270,8 +273,13 @@ export default function AddWorkout() {
               means you’ll rest for 3 days before doing this workout again.
             </Text>
             <TextInput
-              value={String(frequency)}
-              onChangeText={(value) => setFrequency(Number(value) || 1)}
+              value={frequencyInput}
+              onChangeText={(value) =>
+                setFrequencyInput(value.replace(/[^0-9]/g, ""))
+              }
+              onBlur={() => {
+                if (!frequencyInput.trim()) setFrequencyInput("1");
+              }}
               keyboardType="number-pad"
               inputMode="numeric"
               className="w-32 px-3 py-3 text-white border rounded-lg border-white/10 bg-white/5 font-grotesk"
