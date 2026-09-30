@@ -53,10 +53,21 @@ export default function ExerciseCard({
     lastSession?.reps.length &&
     lastSession.reps.every((reps) => reps >= exercise.reps),
   );
+  const previousSessionMissedTarget = Boolean(
+    lastSession?.reps.length &&
+    lastSession.reps.some((reps) => reps < exercise.reps),
+  );
   const previousWeight = Number(lastSession?.weight ?? 0);
   const enteredWeight = Number(sessionExercise.weight) || 0;
-  const needsWeightIncrease =
-    previousSessionMetTarget && enteredWeight <= previousWeight;
+  const weightRecommendation = !lastSession
+    ? "increase"
+    : previousSessionMetTarget && enteredWeight <= previousWeight
+      ? "increase"
+      : previousSessionMissedTarget &&
+          previousWeight > 0 &&
+          enteredWeight >= previousWeight
+        ? "decrease"
+        : null;
 
   const [restStarted, setRestStarted] = useState(0);
   const [restFinished, setRestFinished] = useState(false);
@@ -80,13 +91,6 @@ export default function ExerciseCard({
 
   return (
     <View>
-      {/* Header Section ---------------------- */}
-      {/* <View className="flex flex-row items-center gap-3">
-        <Text className="text-2xl !font-bold text-white/80 capitalize font-grotesk">
-          {exercise.name}
-        </Text>
-      </View> */}
-
       <View className="">
         <Animated.View style={{ height: animatedHeight, overflow: "hidden" }}>
           <View
@@ -96,11 +100,13 @@ export default function ExerciseCard({
           >
             <View className="flex flex-col gap-4">
               {/* History section ---------------------- */}
-              <ExerciseHistory
-                sessions={previousSessions}
-                targetReps={exercise.reps}
-                onUpdateWeight={onUpdateHistoryWeight}
-              />
+              {previousSessions.length > 0 && (
+                <ExerciseHistory
+                  sessions={previousSessions}
+                  targetReps={exercise.reps}
+                  onUpdateWeight={onUpdateHistoryWeight}
+                />
+              )}
 
               {/* Todays session ---------------------- */}
               <View className="flex flex-col flex-1 rounded-xl bg-white/5">
@@ -118,9 +124,11 @@ export default function ExerciseCard({
                   <Pressable
                     onPress={() => setEditingWeight(true)}
                     className={`relative flex flex-col items-center flex-1 gap-3 p-3 border rounded-xl ${
-                      needsWeightIncrease
+                      weightRecommendation === "increase"
                         ? "border-primary/60 bg-primary/15"
-                        : "border-white/10 bg-white/5"
+                        : weightRecommendation === "decrease"
+                          ? "border-tertiary/60 bg-tertiary/15"
+                          : "border-white/10 bg-white/5"
                     }`}
                   >
                     <View className="flex-row items-center w-full gap-2">
@@ -136,21 +144,12 @@ export default function ExerciseCard({
                         <Text className="text-[11px] uppercase text-lightText font-liberation">
                           Weight
                         </Text>
-
-                        {/* edit icon */}
-                        <View className="ml-auto">
-                          <FontAwesomeIcon
-                            icon="pen"
-                            color={colors.lightText}
-                            size={14}
-                          />
-                        </View>
                       </View>
                     </View>
 
                     {/* Input */}
                     <View className="flex flex-col items-center gap-2">
-                      <View className="flex flex-row items-center gap-2 ml-5">
+                      <View className="flex flex-row items-center gap-2">
                         {editingWeight ? (
                           <TextInput
                             autoFocus
@@ -167,7 +166,7 @@ export default function ExerciseCard({
                             {sessionExercise.weight || "0"}
                           </Text>
                         )}
-                        <Text className="text-xs uppercase text-lightText font-liberation">
+                        <Text className="uppercase text-lightText font-liberation">
                           kg
                         </Text>
                       </View>
@@ -291,7 +290,7 @@ export default function ExerciseCard({
                   targetReps={exercise.reps}
                   reps={sessionExercise.reps}
                   submittedSets={submittedSets}
-                  recommendWeightIncrease={needsWeightIncrease}
+                  weightRecommendation={weightRecommendation}
                   badgeAnimation={badgeAnimation}
                   onUpdateReps={onUpdateReps}
                   onEditSet={onEditSet}

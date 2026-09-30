@@ -9,7 +9,7 @@ type SetLoggerProps = {
   reps: string[];
   lastWeekReps: number[];
   submittedSets: number;
-  recommendWeightIncrease: boolean;
+  weightRecommendation: "increase" | "decrease" | null;
   badgeAnimation: { setIndex: number; id: number } | null;
   onUpdateReps: (setIndex: number, value: string) => void;
   onEditSet: (setIndex: number) => void;
@@ -23,7 +23,7 @@ export default function SetLogger({
   reps,
   lastWeekReps,
   submittedSets,
-  recommendWeightIncrease,
+  weightRecommendation,
   badgeAnimation,
   onUpdateReps,
   onEditSet,
@@ -132,9 +132,17 @@ export default function SetLogger({
             <Text className="flex items-center justify-center text-sm text-black rounded size-7 bg-primary font-liberation">
               {currentSetIndex + 1}
             </Text>
-            {recommendWeightIncrease && (
-              <Text className="rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-right text-[10px] uppercase text-primary font-liberation">
-                Increase weight
+            {weightRecommendation && (
+              <Text
+                className={`rounded-md border px-2 py-1 text-right text-[10px] uppercase font-liberation ${
+                  weightRecommendation === "increase"
+                    ? "border-primary/30 bg-primary/10 text-primary"
+                    : "border-tertiary/30 bg-tertiary/10 text-tertiary"
+                }`}
+              >
+                {weightRecommendation === "increase"
+                  ? "Increase weight"
+                  : "Decrease weight"}
               </Text>
             )}
           </View>
