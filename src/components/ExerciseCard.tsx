@@ -53,17 +53,32 @@ export default function ExerciseCard({
     lastSession?.reps.length &&
     lastSession.reps.every((reps) => reps >= exercise.reps),
   );
-  const previousSessionMissedTarget = Boolean(
-    lastSession?.reps.length &&
-    lastSession.reps.some((reps) => reps < exercise.reps),
-  );
+  const lastThreeSessions = exercise.history.slice(-3);
+  const totalReps = (reps: number[]) =>
+    reps.slice(0, exercise.sets).reduce((total, count) => total + count, 0);
+  const hasRepeatedRepRegression = (() => {
+    const [olderSession, previousSession, latestSession] = lastThreeSessions;
+
+    return Boolean(
+      olderSession &&
+      previousSession &&
+      latestSession &&
+      lastThreeSessions.every(
+        (session) =>
+          session.weight === latestSession.weight &&
+          session.reps.length >= exercise.sets,
+      ) &&
+      totalReps(previousSession.reps) < totalReps(olderSession.reps) &&
+      totalReps(latestSession.reps) < totalReps(previousSession.reps),
+    );
+  })();
   const previousWeight = Number(lastSession?.weight ?? 0);
   const enteredWeight = Number(sessionExercise.weight) || 0;
   const weightRecommendation = !lastSession
     ? "increase"
     : previousSessionMetTarget && enteredWeight <= previousWeight
       ? "increase"
-      : previousSessionMissedTarget &&
+      : hasRepeatedRepRegression &&
           previousWeight > 0 &&
           enteredWeight >= previousWeight
         ? "decrease"
@@ -149,7 +164,7 @@ export default function ExerciseCard({
 
                     {/* Input */}
                     <View className="flex flex-col items-center gap-2">
-                      <View className="flex flex-row items-center gap-2">
+                      <View className="flex flex-row items-center gap-1">
                         {editingWeight ? (
                           <TextInput
                             autoFocus
@@ -159,14 +174,14 @@ export default function ExerciseCard({
                             placeholder="0"
                             onBlur={() => setEditingWeight(false)}
                             selectionColor="green"
-                            className="w-10 text-2xl text-center text-white font-liberation"
+                            className="text-2xl text-center text-white w-14 font-liberation"
                           />
                         ) : (
                           <Text className="text-2xl text-white font-liberation ">
                             {sessionExercise.weight || "0"}
                           </Text>
                         )}
-                        <Text className="uppercase text-lightText font-liberation">
+                        <Text className="text-sm tracking-tighter uppercase text-lightText font-liberation">
                           kg
                         </Text>
                       </View>
@@ -298,7 +313,7 @@ export default function ExerciseCard({
                   onSubmitSet={() => {
                     onSubmitSet();
                     setRestFinished(false);
-                    setRestStarted((previous) => previous + 1);
+                    setRestStarted(Date.now());
                   }}
                 />
               </View>
